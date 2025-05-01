@@ -24,7 +24,7 @@ export default function RecordTripScreen() {
   const [startTime, setStartTime] = useState<number | null>(null);
   
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
-  const timerInterval = useRef<NodeJS.Timeout | null>(null);
+  const timerInterval = useRef<number | null>(null);
   const router = useRouter();
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371;
@@ -160,7 +160,7 @@ export default function RecordTripScreen() {
     };
     let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjRiZTMzM2U1LTc1MWEtNDRkZS05ZWJkLWY2MThhY2VlOGEwNCIsImVtYWlsIjoidm9qYWtAZ21haWwuY29tIiwidXNlcm5hbWUiOiJqYW5rb192b2phayIsImlhdCI6MTc0NTQ4NTUxOCwiZXhwIjoxNzQ1NTcxOTE4fQ.69quRNe-6flyYBvQI6ntN2xRLtueuyTnIOel9Z7l8SY';
     try {
-        const response = await fetch('http://10.10.27.5:3000/trips', {
+        const response = await fetch('http://192.168.1.32:3000/trips', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json',
                       'Authorization' : `Bearer ${'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjRiZTMzM2U1LTc1MWEtNDRkZS05ZWJkLWY2MThhY2VlOGEwNCIsImVtYWlsIjoidm9qYWtAZ21haWwuY29tIiwidXNlcm5hbWUiOiJqYW5rb192b2phayIsImlhdCI6MTc0NTgyOTE1MiwiZXhwIjoxNzQ1OTE1NTUyfQ.faTzUDEe_5GN4P2crKuLgLtPqpy_nq43_FzMJBDxjqM'}`
