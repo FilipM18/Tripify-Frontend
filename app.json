@@ -20,8 +20,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "package": "com.filipm18.Frontend"
+      }
     },
     "web": {
       "bundler": "metro",
@@ -46,9 +45,6 @@
     "extra": {
       "router": {
         "origin": false
-      },
-      "eas": {
-        "projectId": "63802a97-96e1-437d-a2e0-31ed653dacbd"
       }
     }
   }

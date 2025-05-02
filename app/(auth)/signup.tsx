@@ -52,7 +52,7 @@ export default function SignupScreen() {
     }
 
     try {
-      const response = await fetch('http://192.168.1.32:3000/auth/register', {
+      const response = await fetch('http://192.168.1.216:3000/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'multipart/form-data',
