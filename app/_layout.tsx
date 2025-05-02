@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { getToken, removeToken } from '../utils/auth';
+import { verifyToken } from '@/utils/api';
 
 export default function RootLayout() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -13,10 +14,7 @@ export default function RootLayout() {
         return;
       }
       try {
-        const resp = await fetch('http://192.168.1.32:3000/auth/verify', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await resp.json();
+        const data = await verifyToken(token);
         if (data.success) {
           setAuthenticated(true);
         } else {

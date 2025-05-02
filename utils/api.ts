@@ -170,3 +170,102 @@ uploadTripPhoto: async ({
 };
 
 
+
+
+
+
+export async function apiRequest<T>(
+  endpoint: string,
+  method: string = 'GET',
+  body?: any,
+  token?: string,
+  headers: Record<string, string> = {}
+): Promise<T> {
+  const config: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...headers,
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  };
+
+  const response = await fetch(`${API_URL}${endpoint}`, config);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+}
+
+// Specific API calls
+
+export async function fetchTrip(tripId: string | number, token: string) {
+  return apiRequest<{ success: boolean; trip: any; error?: string }>(
+    `/trips/${encodeURIComponent(tripId)}`,
+    'GET',
+    undefined,
+    token
+  );
+}
+
+export async function login(email: string, password: string) {
+  return apiRequest<{ success: boolean; token?: string; error?: string }>(
+    '/auth/login',
+    'POST',
+    { email, password }
+  );
+}
+
+export async function register(formData: FormData) {
+  // For multipart/form-data, use fetch directly, not apiRequest
+  const response = await fetch(`${API_URL}/auth/register`, {
+    method: 'POST',
+    headers: {
+      // Do not set Content-Type; let fetch set it for FormData
+    },
+    body: formData,
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function verifyToken(token: string) {
+  return apiRequest<{ success: boolean }>(
+    '/auth/verify',
+    'GET',
+    undefined,
+    token
+  );
+}
+
+export async function postTrip(tripData: any, token: string) {
+    return apiRequest<{ success: boolean; tripId?: string; error?: string }>(
+        '/trips',
+        'POST',
+        tripData,
+        token
+    );
+}
+
+export async function fetchAllTrips(token: string) {
+    return apiRequest<{ success: boolean; trips: any[]; error?: string }>(
+        '/trips',
+        'GET',
+        undefined,
+        token
+    );
+}
+
+export async function fetchComments(tripId: string | number, token: string) {
+    return apiRequest<{ success: boolean; comments: any[]; error?: string }>(
+        `/comments/${encodeURIComponent(tripId)}`,
+        'GET',
+        undefined,
+        token
+    );
+}

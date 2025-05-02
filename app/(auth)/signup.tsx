@@ -3,6 +3,7 @@ import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Image, Ale
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { saveToken } from '@/utils/auth';
+import { register } from '@/utils/api';
 
 export default function SignupScreen() {
   const [username, setUsername] = useState('');
@@ -52,17 +53,9 @@ export default function SignupScreen() {
     }
 
     try {
-      const response = await fetch('http://192.168.1.216:3000/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        body: formData,
-      });
-      const data = await response.json();
+      const data = await register(formData);
       if (data.success) {
-        // Save token (see below)
-        await saveToken(data.token);
+        await saveToken(data.token!);
         router.replace('/(tabs)/home');
       } else {
         Alert.alert('Signup failed', data.error || 'Unknown error');

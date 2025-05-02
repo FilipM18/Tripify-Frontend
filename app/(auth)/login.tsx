@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { saveToken } from '@/utils/auth';
+import { login } from '@/utils/api';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -16,15 +17,9 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.1.216:3000/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
+      const data = await login(email, password);
       if (data.success) {
-        // Save token (see below)
-        await saveToken(data.token);
+        await saveToken(data.token!);
         router.replace('/(tabs)/home');
       } else {
         Alert.alert('Login failed', data.error || 'Unknown error');
