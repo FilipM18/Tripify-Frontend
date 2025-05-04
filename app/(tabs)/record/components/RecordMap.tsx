@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import MapView, { Polyline, Marker } from 'react-native-maps';
-import { PhotoUpload } from '../hooks/useTrip';
+import { PhotoUpload } from '../../../../hooks/useTrip';
 
 interface RecordMapProps {
   route: Array<{latitude: number, longitude: number}>;

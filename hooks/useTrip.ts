@@ -2,8 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
-import { apiService } from '../../../../utils/api';
-import { getToken } from '../../../../utils/auth';
+import { apiService } from '../utils/api';
+import { getToken } from '../utils/auth';
 import { Alert } from 'react-native';
 
 export interface LocationCoordinates {

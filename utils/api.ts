@@ -164,8 +164,65 @@ uploadTripPhoto: async ({
   });
   
   return handleResponse(response);
-}
+},
+
+getUserActivityStreak: async () => {
+  const token = await getToken();
+  if (!token) throw new Error('No authentication token found');
+
+  const tripsData = await apiService.getUserTrips();
+  if (!tripsData.success || !tripsData.trips || tripsData.trips.length === 0) {
+    return { streak: 0, lastActivityDate: null };
+  }
+
+  const sortedTrips = tripsData.trips.sort((a: any, b: any) => 
+    new Date(b.ended_at).getTime() - new Date(a.ended_at).getTime()
+  );
+
+  const tripsByDay = new Map();
   
+  sortedTrips.forEach((trip: any) => {
+    const tripDate = new Date(trip.ended_at);
+    const dateKey = tripDate.toISOString().split('T')[0];
+    
+    if (!tripsByDay.has(dateKey)) {
+      tripsByDay.set(dateKey, []);
+    }
+    tripsByDay.get(dateKey).push(trip);
+  });
+
+  const activityDates = Array.from(tripsByDay.keys()).sort().reverse();
+  
+  if (activityDates.length === 0) {
+    return { streak: 0, lastActivityDate: null };
+  }
+
+  let streak = 0;
+  const lastActivityDate = new Date(activityDates[0]);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const timeDiff = Math.floor((today.getTime() - lastActivityDate.getTime()) / (1000 * 3600 * 24));
+  
+  if (timeDiff > 1) {
+    return { streak: 0, lastActivityDate };
+  }
+  
+  let currentDate = new Date(lastActivityDate);
+  
+  while (activityDates.includes(currentDate.toISOString().split('T')[0])) {
+    streak++;
+    
+    currentDate.setDate(currentDate.getDate() - 1);
+    const dateStr = currentDate.toISOString().split('T')[0];
+    
+    if (!activityDates.includes(dateStr)) {
+      break;
+    }
+  }
+  
+  return { streak, lastActivityDate };
+}
   
 };
 

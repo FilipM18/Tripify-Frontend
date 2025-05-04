@@ -1,29 +1,147 @@
-import React from 'react';
-import { View, Text, Button, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { removeToken } from '@/utils/auth'; // You need to implement this
+import { getToken, removeToken } from '@/utils/auth';
+import { apiRequest } from '@/utils/api';
+import { apiService } from '@/utils/api';
+import ProfileHeader from './components/ProfileHeader';
+import ProfileTabs from './components/ProfileTabs';
+import ProfileStats from './components/ProfileStats';
+import { UserProfile } from '@/utils/types';
+import { API_URL } from '@/utils/constants';
+import ProfileCalendarTab from './components/ProfileCalendarTab';
+import ProfileStatsTab from './components/ProfileStatsTab';
+import { Text } from 'react-native';
+
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [activeTab, setActiveTab] = useState('Kalendar');
+  const [activityStreak, setActivityStreak] = useState(0);
+
+  useEffect(() => {
+    fetchUserProfile();
+    fetchUserStreak();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      setLoading(true);
+      const token = await getToken();
+      if (!token) {
+        router.replace('/(auth)/login');
+        return;
+      }
+
+      const response = await apiRequest<{ success: boolean; user: UserProfile }>(
+        '/auth/verify',
+        'GET',
+        undefined,
+        token
+      );
+
+      if (response.success && response.user) {
+        setUserProfile(response.user);
+      } else {
+        Alert.alert('Error', 'Failed to fetch profile data');
+      }
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+      Alert.alert('Error', error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUserStreak = async () => {
+    try {
+      const { streak } = await apiService.getUserActivityStreak();
+      setActivityStreak(streak);
+    } catch (error) {
+      setActivityStreak(0);
+    }
+  };
 
   const handleLogout = async () => {
     try {
-      await removeToken(); // Remove the token from storage
-      router.replace('/(auth)/login'); // Redirect to login
+      const token = await getToken();
+      if (token) {
+        await apiRequest('/auth/logout', 'POST', undefined, token);
+      }
+      await removeToken();
+      router.replace('/(auth)/login');
     } catch (error) {
+      console.error('Logout error:', error);
       Alert.alert('Logout failed', error instanceof Error ? error.message : 'Unknown error');
     }
   };
 
+  const handleEditProfile = () => {
+    router.push('/profile/edit');
+  };
+
+  const handleTabChange = (tabName: string) => {
+    setActiveTab(tabName);
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4CAF50" />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Profile</Text>
-      <Button title="Log Out" onPress={handleLogout} />
-    </View>
+    <ScrollView style={styles.container}>
+      {userProfile && (
+        <>
+          <ProfileHeader 
+            username={userProfile.username}
+            photoUrl={userProfile.photo_url ? `${API_URL}${userProfile.photo_url}` : null}
+            onEditPress={handleEditProfile}
+            onLogoutPress={handleLogout}
+            streak={activityStreak}
+          />
+          
+          <ProfileStats 
+            followers={0}
+            following={0}
+          />
+          
+          <ProfileTabs 
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
+          
+         
+          <View style={styles.tabContent}>
+            {activeTab === 'Kalendár' && <ProfileCalendarTab />}
+            {activeTab === 'Štatistiky' && <ProfileStatsTab />}
+            {activeTab === 'Informácie' && (<Text>Osobné informácie...</Text>)}
+
+          </View>
+        </>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  text: { fontSize: 24, marginBottom: 24 },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  tabContent: {
+    flex: 1,
+    padding: 16,
+  },
 });

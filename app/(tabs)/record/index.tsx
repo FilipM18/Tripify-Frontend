@@ -5,7 +5,7 @@ import StatsDisplay from './components/StatsDisplay';
 import ActionButtons from './components/ActionButton';
 import ActivityPicker from './components/ActivityPicker';
 import PhotoButton from './components/PhotoButton';
-import { useTrip } from './hooks/useTrip';
+import { useTrip } from '../../../hooks/useTrip';
 
 export default function RecordTripScreen() {
   const {
