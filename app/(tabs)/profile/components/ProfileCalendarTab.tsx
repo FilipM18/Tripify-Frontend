@@ -4,6 +4,8 @@ import { Calendar } from 'react-native-calendars';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { apiService } from '@/utils/api';
 import { Trip } from '@/utils/types';
+import { useTheme } from '@/app/ThemeContext';
+import { lightTheme, darkTheme } from '@/app/theme';
 
 type MarkedDates = {
   [date: string]: {
@@ -64,6 +66,8 @@ const ProfileCalendarTab: React.FC = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
+  const { isDarkMode } = useTheme();
+  const theme = isDarkMode ? darkTheme : lightTheme; 
 
   useEffect(() => {
     fetchTrips();
@@ -90,8 +94,8 @@ const ProfileCalendarTab: React.FC = () => {
         const date = trip.ended_at.split('T')[0];
         if (!dotsByDate[date]) dotsByDate[date] = [];
         dotsByDate[date].push({
-          key: `${trip.type}-${trip.id}`, // Use both type and unique trip id
-          color: activityGradients[trip.type] || '#4CAF50',
+          key: `${trip.type}-${trip.id}`, 
+          color: activityGradients[trip.type] || theme.primary,
         });
       });
       
@@ -100,12 +104,12 @@ const ProfileCalendarTab: React.FC = () => {
       marks[date] = {
         dots: dotsByDate[date],
         marked: true,
-        ...(date === selectedDate ? { selected: true, selectedColor: '#8BA872' } : {}),
+        ...(date === selectedDate ? { selected: true, selectedColor: theme.secondary } : {}),
       };
     });
 
     if (!marks[selectedDate]) {
-      marks[selectedDate] = { selected: true, selectedColor: '#8BA872' };
+      marks[selectedDate] = { selected: true, selectedColor: theme.secondary };
     }
 
     setMarkedDates(marks);
@@ -115,20 +119,92 @@ const ProfileCalendarTab: React.FC = () => {
     (trip) => trip.ended_at.split('T')[0] === selectedDate
   );
 
+  const styles = StyleSheet.create({
+    activities: { flex: 1, padding: 12 },
+    noActivities: { textAlign: 'center', color: theme.secondText, marginTop: 16 },
+    activityCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.card,
+      borderRadius: 32,
+      borderWidth: 1.5,
+      borderColor: theme.border,
+      padding: 20,
+      marginBottom: 20,
+      shadowColor: theme.shadow,
+      shadowOpacity: 0.04,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
+    },
+    iconCircle: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 18,
+    },
+    activityDetails: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    activityType: {
+      fontWeight: 'bold',
+      fontSize: 19,
+      color: theme.text,
+    },
+    activitySub: {
+      color: theme.thirdText,
+      fontSize: 15,
+      marginTop: 2,
+      fontWeight: '400',
+    },
+    activityStats: {
+      alignItems: 'flex-end',
+      justifyContent: 'center',
+      minWidth: 90,
+    },
+    kmText: {
+      fontWeight: 'bold',
+      fontSize: 17,
+      color: theme.text,
+    },
+    kcalRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    kcalIcon: {
+      marginRight: 4,
+    },
+    kcalText: {
+      color: theme.thirdText,
+      fontSize: 15,
+      fontWeight: '400',
+    },
+  });
+
   return (
     <View style={{ flex: 1 }}>
       <Calendar
+        key={`calendar-${isDarkMode ? 'dark' : 'light'}`}
         markingType="multi-dot"
         markedDates={markedDates}
         onDayPress={(day: any) => setSelectedDate(day.dateString)}
         current={selectedDate}
         theme={{
-          selectedDayBackgroundColor: '#8BA872',
-          todayTextColor: '#4CAF50',
-          arrowColor: '#8BA872',
+          selectedDayBackgroundColor: theme.secondary,
+          todayTextColor: theme.primary,
+          arrowColor: theme.secondary,
+          monthTextColor: theme.text,
+          dayTextColor: theme.text,
+          textDisabledColor: theme.thirdText,
+          calendarBackground: theme.statBackground,
         }}
         style={{ marginBottom: 8 }}
       />
+
       <ScrollView style={styles.activities} contentContainerStyle={{ paddingBottom: 32 }}>
         {dayTrips.length === 0 ? (
           <Text style={styles.noActivities}>Žiadne aktivity v tento deň.</Text>
@@ -143,11 +219,11 @@ const ProfileCalendarTab: React.FC = () => {
                     <View
                       style={[
                         styles.iconCircle,
-                        { backgroundColor: activityGradients[typeKey] || '#E0E0E0' },
+                        { backgroundColor: activityGradients[typeKey] || theme.background },
                       ]}
                     >
                       {activityIcons[typeKey] || (
-                        <Ionicons name="walk-outline" size={28} color="#fff" />
+                        <Ionicons name="walk-outline" size={28} color={theme.primary} />
                       )}
                     </View>
                     <View style={styles.activityDetails}>
@@ -161,7 +237,7 @@ const ProfileCalendarTab: React.FC = () => {
                         {distance.toFixed(2)} km
                       </Text>
                       <View style={styles.kcalRow}>
-                        <Ionicons name="water-outline" size={16} color="#888" style={styles.kcalIcon} />
+                        <Ionicons name="water-outline" size={16} color={theme.thirdText} style={styles.kcalIcon} />
                         <Text style={styles.kcalText}>
                           {calories} kcal
                         </Text>
@@ -175,71 +251,5 @@ const ProfileCalendarTab: React.FC = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  activities: { flex: 1, padding: 12 },
-  noActivities: { textAlign: 'center', color: '#888', marginTop: 16 },
-  activityCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 32,
-    borderWidth: 1.5,
-    borderColor: '#E6E6E6',
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 18,
-  },
-  activityDetails: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  activityType: {
-    fontWeight: 'bold',
-    fontSize: 19,
-    color: '#222',
-  },
-  activitySub: {
-    color: '#888',
-    fontSize: 15,
-    marginTop: 2,
-    fontWeight: '400',
-  },
-  activityStats: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    minWidth: 90,
-  },
-  kmText: {
-    fontWeight: 'bold',
-    fontSize: 17,
-    color: '#222',
-  },
-  kcalRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  kcalIcon: {
-    marginRight: 4,
-  },
-  kcalText: {
-    color: '#888',
-    fontSize: 15,
-    fontWeight: '400',
-  },
-});
 
 export default ProfileCalendarTab;

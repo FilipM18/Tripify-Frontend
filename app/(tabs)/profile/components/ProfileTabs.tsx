@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useTheme } from '@/app/ThemeContext';
+import { lightTheme, darkTheme } from '@/app/theme';
 
 interface ProfileTabsProps {
   activeTab: string;
@@ -7,11 +9,49 @@ interface ProfileTabsProps {
 }
 
 const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, onTabChange }) => {
+  const { isDarkMode } = useTheme();
+  const theme = isDarkMode ? darkTheme : lightTheme;
+
   const tabs = [
-    { id: 'calendar', label: 'Kalendar' },
+    { id: 'calendar', label: 'Kalendár' },
     { id: 'statistics', label: 'Štatistiky' },
     { id: 'info', label: 'Informácie' },
   ];
+
+  const styles = StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      borderBottomColor: theme.secondBackground,
+    },
+    tab: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: 12,
+      position: 'relative',
+    },
+    activeTab: {
+      backgroundColor: theme.background,
+    },
+    tabText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: theme.text,
+    },
+    activeTabText: {
+      color: theme.primary,
+      fontWeight: '600',
+    },
+    activeIndicator: {
+      position: 'absolute',
+      bottom: 0,
+      width: '40%',
+      height: 3,
+      backgroundColor: theme.primary,
+      borderTopLeftRadius: 3,
+      borderTopRightRadius: 3,
+    },
+  });
 
   return (
     <View style={styles.container}>
@@ -36,40 +76,5 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, onTabChange }) => 
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    position: 'relative',
-  },
-  activeTab: {
-    backgroundColor: '#F9F9F9',
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#666',
-  },
-  activeTabText: {
-    color: '#4CAF50',
-    fontWeight: '600',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    width: '40%',
-    height: 3,
-    backgroundColor: '#4CAF50',
-    borderTopLeftRadius: 3,
-    borderTopRightRadius: 3,
-  },
-});
 
 export default ProfileTabs;

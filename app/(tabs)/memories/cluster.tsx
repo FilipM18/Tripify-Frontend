@@ -5,6 +5,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { API_URL } from '../../../utils/constants';
 import { PhotoLocation } from '../../../utils/types';
+import { useTheme } from '@/app/ThemeContext';
+import { lightTheme, darkTheme } from '@/app/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -12,7 +14,8 @@ export default function MemoryClusterScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const photos: PhotoLocation[] = JSON.parse(params.photos as string);
-  
+  const { isDarkMode } = useTheme();
+  const theme = isDarkMode ? darkTheme : lightTheme;  
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoLocation | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -29,18 +32,112 @@ export default function MemoryClusterScreen() {
   // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('sk-SK', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
     });
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+      backgroundColor: theme.secondary,
+    },
+    backButton: {
+      padding: 8,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginLeft: 16,
+      color: theme.text,
+    },
+    photoItem: {
+      width: width / 3,
+      height: width / 3,
+      padding: 1,
+    },
+    thumbnail: {
+      width: '100%',
+      height: '100%',
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.background,
+    },
+    modalContent: {
+      width: '100%',
+      height: '100%',
+      backgroundColor: theme.card,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    closeButton: {
+      position: 'absolute',
+      top: 40,
+      right: 20,
+      zIndex: 10,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    photoContainer: {
+      flex: 1,
+      width: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    fullImage: {
+      width: '100%',
+      height: '70%',
+    },
+    photoInfo: {
+      width: '100%',
+      padding: 16,
+      alignItems: 'center',
+    },
+    description: {
+      color: theme.text,
+      fontSize: 16,
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    dateText: {
+      color: theme.secondText,
+      fontSize: 14,
+      marginBottom: 16,
+    },
+    tripButton: {
+      backgroundColor: '#4CAF50',
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+    },
+    tripButtonText: {
+      color: theme.card,
+      fontWeight: 'bold',
+    },
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="black" />
+          <Ionicons name="arrow-back" size={24} color={theme.card} />
         </TouchableOpacity>
         <Text style={styles.title}>Memory Cluster ({photos.length})</Text>
       </View>
@@ -71,7 +168,7 @@ export default function MemoryClusterScreen() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
-              <Ionicons name="close" size={24} color="white" />
+              <Ionicons name="close" size={24} color={theme.card} />
             </TouchableOpacity>
             
             {selectedPhoto && (
@@ -109,95 +206,3 @@ export default function MemoryClusterScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  backButton: {
-    padding: 8,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 16,
-  },
-  photoItem: {
-    width: width / 3,
-    height: width / 3,
-    padding: 1,
-  },
-  thumbnail: {
-    width: '100%',
-    height: '100%',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-  },
-  modalContent: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'black',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 10,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  photoContainer: {
-    flex: 1,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fullImage: {
-    width: '100%',
-    height: '70%',
-  },
-  photoInfo: {
-    width: '100%',
-    padding: 16,
-    alignItems: 'center',
-  },
-  description: {
-    color: 'white',
-    fontSize: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  dateText: {
-    color: '#aaa',
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  tripButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  tripButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-});

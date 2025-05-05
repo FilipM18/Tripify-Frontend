@@ -2,12 +2,16 @@
 import { fetchComments } from '@/utils/api';
 import { getToken } from '@/utils/auth';
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Image } from 'react-native';
+import { useTheme } from '@/app/ThemeContext';
+import { lightTheme, darkTheme } from '@/app/theme';
 
-const CommentsSection = ({ tripId }: { tripId: string }) => {
+const CommentsSection = ({ tripId, refreshTrigger }: { tripId: string, refreshTrigger?: any }) => {
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isDarkMode } = useTheme();
+  const theme = isDarkMode ? darkTheme : lightTheme;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,30 +29,41 @@ const CommentsSection = ({ tripId }: { tripId: string }) => {
       }
     };
     fetchData();
-  }, [tripId]);
+  }, [tripId, refreshTrigger]); // Add refreshTrigger to dependency array
   
 
   if (loading) return <ActivityIndicator />;
   if (error) return <Text style={{ color: 'red' }}>{error}</Text>;
   if (!comments.length) return <Text>No comments yet.</Text>;
 
+  const styles = StyleSheet.create({
+    commentItem: { padding: 10, borderBottomWidth: 1, borderBottomColor:  theme.secondText},
+    
+    commentContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: "fff" },
+    commentImage: { width: 35, height: 35, borderRadius: 25, marginRight: 10, backgroundColor: "fff" },
+    commentContent: { flex: 1, marginLeft: 5 },
+    commentTextContainer: { marginTop: 5 },
+    commentAuthor: { fontWeight: 'bold', fontSize: 14, color: theme.text },
+    commentText: { fontSize: 14, color: theme.text, marginTop: 5 },
+    commentCreatedAt: { fontSize: 12, color: theme.onSurfaceVariant, marginTop: 5 },
+  });
+
   return (
     <View>
       {comments.map((comment, idx) => (
         <View key={idx} style={styles.commentItem}>
-            <Text style={styles.commentAuthor}>{comment.createdAt}</Text>
-          <Text style={styles.commentAuthor}>{comment.userId}</Text>
+          <View style={styles.commentContainer}>
+            <Image source={require("@/assets/avatar_placeholder.png")} style={styles.commentImage} />  
+            <View style={styles.commentContent}>
+              <Text style={styles.commentAuthor}>{comment.userId}</Text>
+              <Text style={styles.commentCreatedAt}>{comment.createdAt}</Text>
+            </View>
+          </View>
           <Text style={styles.commentText}>{comment.commentText}</Text>
         </View>
       ))}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  commentItem: { marginBottom: 8 },
-  commentAuthor: { fontWeight: 'bold', fontSize: 14 },
-  commentText: { fontSize: 14, color: '#222' },
-});
 
 export default CommentsSection;

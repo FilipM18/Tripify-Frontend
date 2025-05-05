@@ -2,8 +2,6 @@ import { API_URL } from './constants';
 import { getToken } from './auth';
 import { PhotoLocation, MemoryCluster } from './types';
 
-
-
 const handleResponse = async (response: Response) => {
   if (!response.ok) {
     const errorData = await response.json();
@@ -292,7 +290,9 @@ export async function register(formData: FormData) {
 }
 
 export async function verifyToken(token: string) {
-  return apiRequest<{ success: boolean }>(
+  return apiRequest<{
+    user: any; success: boolean 
+  }>(
     '/auth/verify',
     'GET',
     undefined,
@@ -325,4 +325,155 @@ export async function fetchComments(tripId: string | number, token: string) {
         undefined,
         token
     );
+}
+
+
+
+export const updateUserProfile = async (
+  userId: string, 
+  username?: string, 
+  email?: string, 
+  phoneNumber?: string, 
+  imageUri?: string | null
+) => {
+  try {
+    const token = await getToken();
+    
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    
+    const formData = new FormData();
+    
+    if (username) formData.append('username', username);
+    if (email) formData.append('email', email);
+    if (phoneNumber !== undefined) formData.append('phoneNumber', phoneNumber);
+    
+    if (imageUri) {
+      const filename = imageUri.split('/').pop() || 'photo.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+      
+      formData.append('pfp', {
+        uri: imageUri,
+        name: filename,
+        type,
+      } as any);
+    }
+    
+    const response = await fetch(`${API_URL}/auth/profile`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Profile update error:', error);
+    throw error;
+  }
+};
+
+export const changePassword = async (currentPassword: string, newPassword: string) => {
+  try {
+    const token = await getToken();
+    
+    if (!token) {
+      throw new Error('No authentication token or user ID found');
+    }
+    
+    const response = await fetch(`${API_URL}/auth/password`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        currentPassword,
+        newPassword
+      }),
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Password change error:', error);
+    throw error;
+  }
+};
+
+export const addComment = async (tripId: string | number, commentText: string) => {
+  try {
+    const token = await getToken();
+    
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    
+    const response = await fetch(`${API_URL}/comments/${tripId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ commentText }),
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Add comment error:', error);
+    throw error;
+  }
+}
+
+export const hitLike = async (tripId: string | number, type: string) => {
+  try {
+    const token = await getToken();
+    
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    
+    const response = await fetch(`${API_URL}/likes/${type}/${tripId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Add like error:', error);
+    throw error;
+  }
+}
+
+export const getLikes = async (tripId: string | number, type: string) => {
+  try {
+    const token = await getToken();
+    
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    
+    const response = await fetch(`${API_URL}/likes/${type}/${tripId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Get likes error:', error);
+    throw error;
+  }
 }

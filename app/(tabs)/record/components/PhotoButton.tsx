@@ -1,6 +1,8 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '@/app/ThemeContext';
+import { lightTheme, darkTheme } from '@/app/theme';
 
 interface PhotoButtonProps {
   onPress: () => void;
@@ -8,9 +10,33 @@ interface PhotoButtonProps {
 }
 
 export default function PhotoButton({ onPress, disabled }: PhotoButtonProps) {
+  const { isDarkMode } = useTheme();
+  const theme = isDarkMode ? darkTheme : lightTheme; 
+
+  const styles = StyleSheet.create({
+    button: {
+      position: 'absolute',
+      bottom: 100,  // Position above the action button
+      right: 20,
+      backgroundColor: '#aaa' ,
+
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      justifyContent: 'center',
+      alignItems: 'center',
+      elevation: 5,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      zIndex: 10,
+    },
+  });
+
   return (
     <TouchableOpacity 
-      style={[styles.button, disabled && styles.disabled]} 
+      style={styles.button} 
       onPress={onPress}
       disabled={disabled}
     >
@@ -18,21 +44,3 @@ export default function PhotoButton({ onPress, disabled }: PhotoButtonProps) {
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  button: {
-    position: 'absolute',
-    bottom: 90,
-    right: 20,
-    backgroundColor: '#4CAF50',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-  },
-  disabled: {
-    backgroundColor: '#aaa',
-  },
-});

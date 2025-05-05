@@ -1,12 +1,22 @@
 // app/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../ThemeContext'; 
+import { lightTheme, darkTheme } from '../theme'; 
 
 export default function TabLayout() {
+  const { isDarkMode } = useTheme();
+  const theme = isDarkMode ? darkTheme : lightTheme;
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarStyle: {
+          backgroundColor: theme.background,
+        },
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.secondText,
       }}
     >
       <Tabs.Screen
@@ -44,7 +54,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Ionicons name="settings-outline" size={24} color={color} />,
         }}
       />
-      {/* Hide the index route from the tab bar */}
+
       <Tabs.Screen name="index" options={{ href: null }} />
     </Tabs>
   );

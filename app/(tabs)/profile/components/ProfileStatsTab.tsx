@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { apiService } from '@/utils/api';
 import { Trip } from '@/utils/types';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '@/app/ThemeContext';
+import { lightTheme, darkTheme } from '@/app/theme';
 
 function estimateCalories(type: string, distanceKm: number): number {
   switch (type) {
@@ -22,6 +24,8 @@ const ProfileStatsTab: React.FC = () => {
   const [totalKm, setTotalKm] = useState(0);
   const [totalCalories, setTotalCalories] = useState(0);
   const [totalTrips, setTotalTrips] = useState(0);
+  const { isDarkMode } = useTheme();
+  const theme = isDarkMode ? darkTheme : lightTheme; 
 
   useEffect(() => {
     fetchTrips();
@@ -49,11 +53,57 @@ const ProfileStatsTab: React.FC = () => {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      padding: 18,
+      paddingTop: 24,
+    },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.background,
+      borderRadius: 24,
+      borderWidth: 1.5,
+      borderColor: theme.border,
+      padding: 18,
+      marginBottom: 18,
+      shadowColor: theme.shadow,
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2, 
+    },
+    iconCircle: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: theme.secondBackground,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 18,
+    },
+    cardDetails: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    statLabel: {
+      fontSize: 15,
+      color: theme.thirdText,
+      marginBottom: 4,
+      fontWeight: '500',
+    },
+    statValue: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      color: theme.text,
+    },
+  });
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
         <View style={styles.iconCircle}>
-          <Ionicons name="map-outline" size={28} color="#4CAF50" />
+          <Ionicons name="map-outline" size={28} color={theme.primary} />
         </View>
         <View style={styles.cardDetails}>
           <Text style={styles.statLabel}>Počet výletov</Text>
@@ -62,7 +112,7 @@ const ProfileStatsTab: React.FC = () => {
       </View>
       <View style={styles.card}>
         <View style={styles.iconCircle}>
-          <Ionicons name="walk-outline" size={28} color="#4CAF50" />
+          <Ionicons name="walk-outline" size={28} color={theme.primary}/>
         </View>
         <View style={styles.cardDetails}>
           <Text style={styles.statLabel}>Prejdené km</Text>
@@ -71,7 +121,7 @@ const ProfileStatsTab: React.FC = () => {
       </View>
       <View style={styles.card}>
         <View style={styles.iconCircle}>
-          <Ionicons name="flame-outline" size={28} color="#4CAF50" />
+          <Ionicons name="flame-outline" size={28} color={theme.primary} />
         </View>
         <View style={styles.cardDetails}>
           <Text style={styles.statLabel}>Spálené kalórie</Text>
@@ -81,51 +131,5 @@ const ProfileStatsTab: React.FC = () => {
     </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 18,
-    paddingTop: 24,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: '#E6E6E6',
-    padding: 18,
-    marginBottom: 18,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2, 
-  },
-  iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#E8F5E9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 18,
-  },
-  cardDetails: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  statLabel: {
-    fontSize: 15,
-    color: '#888',
-    marginBottom: 4,
-    fontWeight: '500',
-  },
-  statValue: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#222',
-  },
-});
 
 export default ProfileStatsTab;

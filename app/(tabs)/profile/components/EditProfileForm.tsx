@@ -12,6 +12,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '@/utils/constants';
 import { UserProfile } from '@/utils/types';
+import { useTheme } from '@/app/ThemeContext';
+import { lightTheme, darkTheme } from '@/app/theme';
 
 interface EditProfileFormProps {
   userProfile: UserProfile;
@@ -33,6 +35,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
     userProfile.photo_url ? `${API_URL}${userProfile.photo_url}` : null
   );
   const [imageFile, setImageFile] = useState<string | null>(null);
+  const { isDarkMode } = useTheme();
+  const theme = isDarkMode ? darkTheme : lightTheme; 
 
   const pickImage = async () => {
     try {
@@ -97,6 +101,96 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
     onSubmit(formData);
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      padding: 16,
+      backgroundColor: theme.secondBackground,
+    },
+    imageSection: {
+      alignItems: 'center',
+      marginBottom: 24,
+    },
+    imageContainer: {
+      position: 'relative', 
+      marginBottom: 8,
+
+    },
+    profileImage: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+    },
+    placeholderImage: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      backgroundColor: theme.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    editImageButton: {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      backgroundColor: theme.primary,
+      borderRadius: 15,
+      width: 30,
+      height: 30,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: theme.border,
+    },
+    formSection: {
+      marginBottom: 24,
+    },
+    inputGroup: {
+      marginBottom: 16,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: '500',
+      marginBottom: 6,
+      color: theme.text,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 16,
+      color: theme.secondText,
+    },
+    passwordButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    passwordButtonText: {
+      fontSize: 16,
+      color: theme.primary,
+      fontWeight: '500',
+    },
+    submitButton: {
+      backgroundColor: theme.primary,
+      borderRadius: 8,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    disabledButton: {
+      backgroundColor: '#A5D6A7',
+    },
+    submitButtonText: {
+      color: theme.text,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.imageSection}>
@@ -105,11 +199,11 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
             <Image source={{ uri: profileImage }} style={styles.profileImage} />
           ) : (
             <View style={styles.placeholderImage}>
-              <Ionicons name="person" size={40} color="#999" />
+              <Ionicons name="person" size={40} color={theme.secondText} />
             </View>
           )}
           <View style={styles.editImageButton}>
-            <Ionicons name="camera" size={18} color="#fff" />
+            <Ionicons name="camera" size={18} color={theme.card} />
           </View>
         </TouchableOpacity>
       </View>
@@ -121,7 +215,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
             style={styles.input}
             value={username}
             onChangeText={setUsername}
-            placeholder="Enter username"
+            placeholder="Zadaj username"
+            placeholderTextColor={theme.secondText}
           />
         </View>
 
@@ -131,19 +226,21 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
             style={styles.input}
             value={email}
             onChangeText={setEmail}
-            placeholder="Enter email"
+            placeholder="Zadaj email"
+            placeholderTextColor={theme.secondText}
             keyboardType="email-address"
             autoCapitalize="none"
           />
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Phone Number</Text>
+          <Text style={styles.label}>Tel. číslo</Text>
           <TextInput
             style={styles.input}
             value={phoneNumber}
             onChangeText={setPhoneNumber}
-            placeholder="Enter phone number (optional)"
+            placeholder="Zadaj tel. číslo (optional)"
+            placeholderTextColor={theme.secondText}
             keyboardType="phone-pad"
             maxLength={10}
           />
@@ -153,8 +250,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           style={styles.passwordButton}
           onPress={onPasswordChangeRequest}
         >
-          <Text style={styles.passwordButtonText}>Change Password</Text>
-          <Ionicons name="chevron-forward" size={18} color="#4CAF50" />
+          <Text style={styles.passwordButtonText}>Zmeň heslo</Text>
+          <Ionicons name="chevron-forward" size={18} color={theme.primary} />
         </TouchableOpacity>
       </View>
 
@@ -166,98 +263,11 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
         {isSubmitting ? (
           <ActivityIndicator color="#fff" size="small" />
         ) : (
-          <Text style={styles.submitButtonText}>Save Changes</Text>
+          <Text style={styles.submitButtonText}>Ulož zmeny</Text>
         )}
       </TouchableOpacity>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  imageSection: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  imageContainer: {
-    position: 'relative', 
-    marginBottom: 8,
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  placeholderImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#E0E0E0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  editImageButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#4CAF50',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFF',
-  },
-  formSection: {
-    marginBottom: 24,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 6,
-    color: '#666',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#DDD',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-  },
-  passwordButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEE',
-  },
-  passwordButtonText: {
-    fontSize: 16,
-    color: '#4CAF50',
-    fontWeight: '500',
-  },
-  submitButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  disabledButton: {
-    backgroundColor: '#A5D6A7',
-  },
-  submitButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
 
 export default EditProfileForm;

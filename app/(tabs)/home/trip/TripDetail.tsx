@@ -10,13 +10,16 @@ import { useLocalSearchParams } from "expo-router";
 import { getToken } from "@/utils/auth";
 import { fetchTrip } from "@/utils/api";
 import TripDetailCard from "./TripDetailCard";
+import { useTheme } from "@/app/ThemeContext";
+import { darkTheme, lightTheme } from "@/app/theme";
 
 const TripDetailScreen = () => {
     const { tripId } = useLocalSearchParams<{ tripId: string }>();
     const [trip, setTrip] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
+    const { isDarkMode } = useTheme();
+    const theme = isDarkMode ? darkTheme : lightTheme;
     useEffect(() => {
         const fetchData = async () => {
         setLoading(true);
@@ -40,7 +43,7 @@ const TripDetailScreen = () => {
     if (!trip) return null;
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#f6f7fb" }}>
+        <View style={{ flex: 1, backgroundColor: theme.background }}>
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <TripDetailCard trip={trip} />
         </ScrollView>

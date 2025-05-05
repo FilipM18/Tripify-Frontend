@@ -12,14 +12,17 @@ import { API_URL } from '@/utils/constants';
 import ProfileCalendarTab from './components/ProfileCalendarTab';
 import ProfileStatsTab from './components/ProfileStatsTab';
 import { Text } from 'react-native';
-
+import { useTheme } from '@/app/ThemeContext';
+import { lightTheme, darkTheme } from '@/app/theme';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState('Kalendar');
+  const [activeTab, setActiveTab] = useState('Kalendár');
   const [activityStreak, setActivityStreak] = useState(0);
+  const { isDarkMode } = useTheme();
+  const theme = isDarkMode ? darkTheme : lightTheme;
 
   useEffect(() => {
     fetchUserProfile();
@@ -86,10 +89,32 @@ export default function ProfileScreen() {
     setActiveTab(tabName);
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.card,
+    },
+    tabContent: {
+      flex: 1,
+      padding: 16,
+    },
+    info: {
+      textAlign: 'center',
+      color: theme.secondText,
+      marginTop: 16,
+    },
+  });
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4CAF50" />
+        <ActivityIndicator size="large" color={theme.primary}/>
       </View>
     );
   }
@@ -120,7 +145,7 @@ export default function ProfileScreen() {
           <View style={styles.tabContent}>
             {activeTab === 'Kalendár' && <ProfileCalendarTab />}
             {activeTab === 'Štatistiky' && <ProfileStatsTab />}
-            {activeTab === 'Informácie' && (<Text>Osobné informácie...</Text>)}
+            {activeTab === 'Informácie' && (<Text style={styles.info}>Osobné informácie...</Text>)}
 
           </View>
         </>
@@ -128,20 +153,3 @@ export default function ProfileScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  tabContent: {
-    flex: 1,
-    padding: 16,
-  },
-});

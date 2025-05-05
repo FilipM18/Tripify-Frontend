@@ -5,9 +5,24 @@ import StatsDisplay from './components/StatsDisplay';
 import ActionButtons from './components/ActionButton';
 import ActivityPicker from './components/ActivityPicker';
 import PhotoButton from './components/PhotoButton';
-import { useTrip } from '../../../hooks/useTrip';
+import { useTheme } from '@/app/ThemeContext';
+import { lightTheme, darkTheme } from '@/app/theme';
+import { useTrip } from '@/hooks/useTrip';
 
 export default function RecordTripScreen() {
+  const { isDarkMode } = useTheme();
+  const theme = isDarkMode ? darkTheme : lightTheme;  
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background
+    },
+    mapContainer: {
+      ...StyleSheet.absoluteFillObject, // This makes the map fill the entire screen
+    },
+  });
+
   const {
     route,
     currentLocation,
@@ -25,29 +40,36 @@ export default function RecordTripScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <RecordMap 
-        route={route} 
-        currentLocation={currentLocation}
-        photos={photos}
-      />
+      {/* Map as background */}
+      <View style={styles.mapContainer}>
+        <RecordMap 
+          route={route} 
+          currentLocation={currentLocation}
+          photos={photos}
+        />
+      </View>
       
-      <ActivityPicker 
-        selectedActivity={selectedActivity}
-        onSelectActivity={setSelectedActivity}
-        disabled={isRecording}
-      />
-      
+      {/* Stats at the top */}
       <StatsDisplay 
         duration={duration}
         distance={totalDistance}
         pace={pace}
       />
       
+      {/* Activity picker (you may need to position this as well) */}
+      <ActivityPicker 
+        selectedActivity={selectedActivity}
+        onSelectActivity={setSelectedActivity}
+        disabled={isRecording}
+      />
+
+      {/* Photo button at bottom right */}
       <PhotoButton 
         onPress={takePhoto}
         disabled={!isRecording}
       />
       
+      {/* Action button at bottom center */}
       <ActionButtons 
         isRecording={isRecording}
         onStart={startRecording}
@@ -57,9 +79,3 @@ export default function RecordTripScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff'
-  }
-});

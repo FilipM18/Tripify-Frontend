@@ -16,6 +16,8 @@ import EditHeader from './components/EditHeader';
 import EditProfileForm from './components/EditProfileForm';
 import EditPasswordForm from './components/EditPasswordForm';
 import { API_URL } from '@/utils/constants';
+import { useTheme } from '@/app/ThemeContext';
+import { lightTheme, darkTheme } from '@/app/theme';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -23,6 +25,8 @@ export default function EditProfileScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const { isDarkMode } = useTheme();
+  const theme = isDarkMode ? darkTheme : lightTheme;
 
   useEffect(() => {
     fetchUserProfile();
@@ -128,10 +132,26 @@ export default function EditProfileScreen() {
     setShowPasswordForm(!showPasswordForm);
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.card,
+    },
+    scrollContent: {
+      flexGrow: 1,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.card,
+    },
+  });
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4CAF50" />
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
@@ -168,19 +188,3 @@ export default function EditProfileScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-});

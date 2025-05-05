@@ -27,8 +27,13 @@ export default function ActionButtons({ isRecording, onStart, onStop }: ActionBu
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    position: 'absolute',
+    bottom: 100,
+    left: 0,
+    right: 0,
     alignItems: 'center',
+    backgroundColor: 'transparent',
+    zIndex: 10,
   },
   actionButton: {
     paddingVertical: 12,
@@ -38,10 +43,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   startButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: 'rgba(76, 175, 80, 0.9)', // Semi-transparent green
   },
   stopButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: 'rgba(244, 67, 54, 0.9)', // Semi-transparent red
   },
   buttonText: {
     color: 'white',
