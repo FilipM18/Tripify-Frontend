@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { API_URL } from '@/utils/constants';
@@ -7,10 +7,7 @@ import { getLikes, hitLike, verifyToken } from '@/utils/api';
 import { getToken } from '@/utils/auth';
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
-
-const CARD_WIDTH = Dimensions.get('window').width - 32;
-const MAP_HEIGHT = 180;
-const PHOTO_SIZE = CARD_WIDTH*0.65;
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 type Trip = {
   id: number;
@@ -37,8 +34,14 @@ type TripCardProps = {
 const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(Number(trip.likes_count));
+  const { isTablet, width } = useScreenDimensions();
   const { isDarkMode } = useTheme();
   const theme = isDarkMode ? darkTheme : lightTheme;
+
+  
+  const CARD_WIDTH = isTablet ? Math.min(600, width * 0.8) : width - 32;
+  const MAP_HEIGHT = isTablet ? 220 : 180;
+  const PHOTO_SIZE = CARD_WIDTH * 0.65;
 
   useEffect(() => {
     const checkIfLiked = async () => {
@@ -117,7 +120,8 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
       borderRadius: 18,
       padding: 12,
       marginBottom: 20,
-      marginHorizontal: 8,
+      width: CARD_WIDTH,
+      alignSelf: 'center', // Center the card on tablet
       elevation: 3,
       shadowColor: theme.shadow,
       shadowOpacity: 0.07,
@@ -234,9 +238,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
     },
   });
   
-
   return (
-    
     <View style={styles.card}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
       {/* Header */}
@@ -367,7 +369,6 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
         </TouchableOpacity>
       </View>
     </View>
-    
   );
 };
 

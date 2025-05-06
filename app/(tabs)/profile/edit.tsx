@@ -18,6 +18,7 @@ import EditPasswordForm from './components/EditPasswordForm';
 import { API_URL } from '@/utils/constants';
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function EditProfileScreen() {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const { isDarkMode } = useTheme();
   const theme = isDarkMode ? darkTheme : lightTheme;
+  const { isTablet } = useScreenDimensions();
 
   useEffect(() => {
     fetchUserProfile();
@@ -146,6 +148,11 @@ export default function EditProfileScreen() {
       alignItems: 'center',
       backgroundColor: theme.card,
     },
+    contentContainer: {
+      maxWidth: isTablet ? 700 : '100%',
+      width: isTablet ? '80%' : '100%',
+      alignSelf: isTablet ? 'center' : undefined,
+    },
   });
 
   if (loading) {
@@ -163,10 +170,12 @@ export default function EditProfileScreen() {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.contentContainer}>
         <EditHeader 
           title={showPasswordForm ? "Zmena hesla" : "Upraviť profil"}
           onBackPress={() => showPasswordForm ? togglePasswordForm() : router.back()}
         />
+        
         
         {userProfile && !showPasswordForm && (
           <EditProfileForm 
@@ -184,6 +193,7 @@ export default function EditProfileScreen() {
             isSubmitting={submitting}
           />
         )}
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

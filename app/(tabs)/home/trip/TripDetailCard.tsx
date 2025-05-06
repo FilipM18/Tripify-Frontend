@@ -20,9 +20,8 @@ import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 import { router } from "expo-router";
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
-const MAP_HEIGHT = 340; // Taller for visual impact
 
 function geoJsonToLatLngs(route: { coordinates: [any, any][] }) {
   return route.coordinates.map(([lng, lat]) => ({
@@ -53,6 +52,10 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
   const [refreshComments, setRefreshComments] = useState(false);
   const { isDarkMode } = useTheme();
   const theme = isDarkMode ? darkTheme : lightTheme;
+  const { isTablet, width } = useScreenDimensions();
+
+  const MAP_HEIGHT = isTablet ? 420 : 340;
+  const contentWidth = isTablet ? Math.min(700, width * 0.85) : width;
 
   useEffect(() => {
 
@@ -151,7 +154,7 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
 
   const styles = StyleSheet.create({
     mapWrapper: {
-      width: SCREEN_WIDTH,
+      width: width,
       height: MAP_HEIGHT,
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
@@ -176,6 +179,9 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
       shadowRadius: 14,
       shadowOffset: { width: 0, height: 5 },
       minHeight: 340,
+      maxWidth: isTablet ? contentWidth : '100%',
+      alignSelf: isTablet ? 'center' : undefined,
+      width: isTablet ? contentWidth : '100%',
     },
     grabber: {
       alignSelf: "center",

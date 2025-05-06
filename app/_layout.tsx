@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { getToken, removeToken } from '../utils/auth';
 import { verifyToken } from '@/utils/api';
 import { ThemeProvider } from '../app/ThemeContext'; // Adjust the import path as needed
+import React from 'react';
 
 export default function RootLayout() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);

@@ -7,6 +7,7 @@ import { API_URL } from '../../../utils/constants';
 import { PhotoLocation } from '../../../utils/types';
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 const { width } = Dimensions.get('window');
 
@@ -15,7 +16,8 @@ export default function MemoryClusterScreen() {
   const params = useLocalSearchParams();
   const photos: PhotoLocation[] = JSON.parse(params.photos as string);
   const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme;  
+  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { isTablet, width } = useScreenDimensions();
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoLocation | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -47,23 +49,23 @@ export default function MemoryClusterScreen() {
     header: {
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 16,
+      padding: isTablet ? 20 : 16,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
       backgroundColor: theme.secondary,
     },
     backButton: {
-      padding: 8,
+      padding: isTablet ? 12 : 8,
     },
     title: {
-      fontSize: 18,
+      fontSize: isTablet ? 22 : 18,
       fontWeight: 'bold',
-      marginLeft: 16,
+      marginLeft: isTablet ? 20 : 16,
       color: theme.text,
     },
     photoItem: {
-      width: width / 3,
-      height: width / 3,
+      width: isTablet ? width / 4 : width / 3,
+      height: isTablet ? width / 4 : width / 3,
       padding: 1,
     },
     thumbnail: {
@@ -85,12 +87,12 @@ export default function MemoryClusterScreen() {
     },
     closeButton: {
       position: 'absolute',
-      top: 40,
-      right: 20,
+      top: isTablet ? 50: 40,
+      right: isTablet ? 30: 20,
       zIndex: 10,
-      width: 36,
-      height: 36,
-      borderRadius: 18,
+      width: isTablet ? 48: 36,
+      height: isTablet ? 48 : 36,
+      borderRadius: isTablet ? 24 : 18,
       backgroundColor: theme.primary,
       justifyContent: 'center',
       alignItems: 'center',
@@ -102,34 +104,35 @@ export default function MemoryClusterScreen() {
       alignItems: 'center',
     },
     fullImage: {
-      width: '100%',
-      height: '70%',
+      width: isTablet ? '90%' : '100%',
+      height: isTablet ? '70%' : '70%',
     },
     photoInfo: {
-      width: '100%',
-      padding: 16,
+      width: isTablet ? '80%' : '100%',
+      padding: isTablet ? 24 : 16,
       alignItems: 'center',
     },
     description: {
       color: theme.text,
-      fontSize: 16,
-      marginBottom: 8,
+      fontSize: isTablet ? 18 : 16,
+      marginBottom: isTablet ? 12 : 8,
       textAlign: 'center',
     },
     dateText: {
       color: theme.secondText,
-      fontSize: 14,
-      marginBottom: 16,
+      fontSize: isTablet ? 16 : 14,
+      marginBottom: isTablet ? 20 : 16,
     },
     tripButton: {
       backgroundColor: '#4CAF50',
-      paddingHorizontal: 16,
-      paddingVertical: 8,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingVertical: isTablet ? 12 : 8,
       borderRadius: 20,
     },
     tripButtonText: {
       color: theme.card,
       fontWeight: 'bold',
+      fontSize: isTablet ? 16 : 14,
     },
   });
 
@@ -144,7 +147,7 @@ export default function MemoryClusterScreen() {
 
       <FlatList
         data={photos}
-        numColumns={3}
+        numColumns={isTablet ? 4 : 3}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity 

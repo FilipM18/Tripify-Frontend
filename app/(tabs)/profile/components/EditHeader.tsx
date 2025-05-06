@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 interface EditHeaderProps {
   title: string;
@@ -11,41 +12,36 @@ interface EditHeaderProps {
 
 const EditHeader: React.FC<EditHeaderProps> = ({ title, onBackPress }) => {
   const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme;  
+  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { isTablet } = useScreenDimensions();
 
   const styles = StyleSheet.create({
-    header: {
+    container: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: 16,
+      paddingHorizontal: isTablet ? 24 : 16,
+      paddingVertical: isTablet ? 20 : 16,
+      backgroundColor: theme.card,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
-      backgroundColor: theme.secondary,
     },
     backButton: {
-      padding: 4,
+      padding: 8,
     },
     title: {
-      fontSize: 18,
+      fontSize: isTablet ? 22 : 18,
       fontWeight: 'bold',
+      marginLeft: 16,
       color: theme.text,
-    },
-    placeholder: {
-      width: 32, 
     },
   });
 
   return (
-    <View style={styles.header}>
-      <TouchableOpacity 
-        style={styles.backButton} 
-        onPress={onBackPress}
-      >
-        <Ionicons name="arrow-back" size={24} color={theme.secondText} />
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.backButton} onPress={onBackPress}>
+        <Ionicons name="arrow-back" size={isTablet ? 24 : 20} color={theme.text} />
       </TouchableOpacity>
       <Text style={styles.title}>{title}</Text>
-      <View style={styles.placeholder} />
     </View>
   );
 };

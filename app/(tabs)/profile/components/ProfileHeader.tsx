@@ -4,6 +4,7 @@ import { API_URL } from '@/utils/constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 interface ProfileHeaderProps {
   username: string;
@@ -21,7 +22,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   streak,
 }) => {
   const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme; 
+  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { isTablet } = useScreenDimensions();
 
   const fullPhotoUrl = photoUrl ? `${API_URL}${photoUrl}` : null;
 
@@ -37,29 +39,29 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       position: 'relative',
     },
     headerBackground: {
-      height: 100,
+      height: isTablet ? 120 : 100,
       backgroundColor: '#8BA872',
       width: '100%',
     },
     profileContent: {
       alignItems: 'center',
-      paddingBottom: 16,
+      paddingBottom: isTablet ? 20 : 16,
     },
     avatarContainer: {
-      marginTop: -40, 
+      marginTop: isTablet ? -50 : -40,
     },
     avatar: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
+      width: isTablet ? 100 : 80,
+      height: isTablet ? 100 : 80,
+      borderRadius: isTablet ? 50 : 40,
       borderWidth: 3,
       borderColor: theme.border,
       backgroundColor: theme.background,
     },
     avatarPlaceholder: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
+      width: isTablet ? 100 : 80,
+      height: isTablet ? 100 : 80,
+      borderRadius: isTablet ? 50 : 40,
       backgroundColor: theme.background,
       justifyContent: 'center',
       alignItems: 'center',
@@ -67,30 +69,30 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       borderColor: theme.border,
     },
     avatarLetter: {
-      fontSize: 32,
+      fontSize: isTablet ? 40 : 32,
       fontWeight: 'bold',
       color: theme.text,
     },
     username: {
-      fontSize: 18,
+      fontSize: isTablet ? 22 : 18,
       fontWeight: 'bold',
-      marginTop: 8,
+      marginTop: isTablet ? 10 : 8,
       color: theme.text,
     },
     activeStreak: {
-      fontSize: 14,
+      fontSize: isTablet ? 16 : 14,
       color: theme.secondText,
       marginTop: 4,
     },
     actions: {
       flexDirection: 'row',
-      marginTop: 12,
+      marginTop: isTablet ? 16 : 12,
     },
     editButton: {
       flexDirection: 'row',
       backgroundColor: theme.primary,
       paddingVertical: 8,
-      paddingHorizontal: 16,
+      paddingHorizontal: isTablet ? 20 : 16,
       borderRadius: 20,
       alignItems: 'center',
       marginRight: 8,
@@ -99,10 +101,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       color: theme.text,
       marginLeft: 4,
       fontWeight: '500',
+      fontSize: isTablet ? 16 : 14,
     },
     logoutButton: {
       backgroundColor: theme.background,
-      padding: 8,
+      padding: isTablet ? 10 : 8,
       borderRadius: 20,
       alignItems: 'center',
       justifyContent: 'center',
@@ -133,7 +136,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             style={styles.editButton} 
             onPress={onEditPress}
           >
-            <Ionicons name="pencil-outline" size={18} color="#FFF" />
+            <Ionicons name="pencil-outline" size={isTablet ? 20 : 18} color="#FFF" />
             <Text style={styles.editText}>Edit Profil</Text>
           </TouchableOpacity>
 
@@ -141,7 +144,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             style={styles.logoutButton} 
             onPress={onLogoutPress}
           >
-            <Ionicons name="log-out-outline" size={18} color={theme.text} />
+            <Ionicons name="log-out-outline" size={isTablet ? 20 : 18} color={theme.text} />
           </TouchableOpacity>
         </View>
       </View>

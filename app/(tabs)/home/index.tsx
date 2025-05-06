@@ -12,8 +12,9 @@ import { fetchAllTrips } from "@/utils/api";
 import TripCard from "@/app/(tabs)/home/components/TripCard";
 import { getToken } from "@/utils/auth";
 import { useRouter } from "expo-router";
-import { useTheme } from "../../ThemeContext"; // Adjust path as needed
-import { lightTheme, darkTheme } from "../../theme"; // Adjust path as needed
+import { useTheme } from "../../ThemeContext"; 
+import { lightTheme, darkTheme } from "../../theme"; 
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 const TripsScreen = ({ token }: { token: string }) => {
   const [trips, setTrips] = useState<any[]>([]);
@@ -22,6 +23,7 @@ const TripsScreen = ({ token }: { token: string }) => {
   const router = useRouter();
   const { isDarkMode } = useTheme();
   const theme = isDarkMode ? darkTheme : lightTheme;
+  const { isTablet } = useScreenDimensions();
 
   const styles = StyleSheet.create({
     centered: {
@@ -33,6 +35,8 @@ const TripsScreen = ({ token }: { token: string }) => {
     list: {
       padding: 10,
       backgroundColor: theme.background,
+      alignItems: isTablet ? "center" : "stretch",
+      width: '100%',
     },
     headerContainer: {
       flexDirection: 'row',
@@ -41,6 +45,9 @@ const TripsScreen = ({ token }: { token: string }) => {
       paddingHorizontal: 16,
       paddingVertical: 12,
       backgroundColor: theme.background,
+      maxWidth: isTablet ? 600 : '100%',
+      alignSelf: isTablet ? 'center' : undefined,
+      width: isTablet ? '80%' : '100%',
     },
     logoContainer: {
       flexDirection: 'row',
@@ -49,7 +56,7 @@ const TripsScreen = ({ token }: { token: string }) => {
     logoIcon: {
       width: 24,
       height: 24,
-      tintColor: '#4CAF50', // Green color for the logo
+      tintColor: '#4CAF50', 
     },
     logoText: {
       fontSize: 24,

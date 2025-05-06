@@ -5,6 +5,7 @@ import { Trip } from '@/utils/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 function estimateCalories(type: string, distanceKm: number): number {
   switch (type) {

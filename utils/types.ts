@@ -19,6 +19,8 @@ export interface MemoryCluster {
   
 
 export interface UserProfile {
+  display_name: string;
+  bio: string;
   id: string;
   username: string;
   email: string;

@@ -6,6 +6,7 @@ import { apiService } from '@/utils/api';
 import { Trip } from '@/utils/types';
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 type MarkedDates = {
   [date: string]: {
@@ -67,7 +68,8 @@ const ProfileCalendarTab: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
   const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme; 
+  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { isTablet } = useScreenDimensions();
 
   useEffect(() => {
     fetchTrips();
@@ -121,7 +123,12 @@ const ProfileCalendarTab: React.FC = () => {
 
   const styles = StyleSheet.create({
     activities: { flex: 1, padding: 12 },
-    noActivities: { textAlign: 'center', color: theme.secondText, marginTop: 16 },
+    noActivities: { 
+      textAlign: 'center', 
+      color: theme.secondText, 
+      marginTop: isTablet ? 24 : 16, 
+      fontSize: isTablet ? 16 : 14,
+    },
     activityCard: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -129,8 +136,8 @@ const ProfileCalendarTab: React.FC = () => {
       borderRadius: 32,
       borderWidth: 1.5,
       borderColor: theme.border,
-      padding: 20,
-      marginBottom: 20,
+      padding: isTablet ? 24 : 20,
+      marginBottom: isTablet ? 24 :20,
       shadowColor: theme.shadow,
       shadowOpacity: 0.04,
       shadowRadius: 8,
@@ -138,12 +145,12 @@ const ProfileCalendarTab: React.FC = () => {
       elevation: 2,
     },
     iconCircle: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      width: isTablet ? 64 : 56,
+      height: isTablet ? 64: 56,
+      borderRadius: isTablet ? 32 : 28,
       justifyContent: 'center',
       alignItems: 'center',
-      marginRight: 18,
+      marginRight: isTablet ? 24 : 18,
     },
     activityDetails: {
       flex: 1,
@@ -151,23 +158,23 @@ const ProfileCalendarTab: React.FC = () => {
     },
     activityType: {
       fontWeight: 'bold',
-      fontSize: 19,
+      fontSize: isTablet ? 21 : 19,
       color: theme.text,
     },
     activitySub: {
       color: theme.thirdText,
-      fontSize: 15,
+      fontSize: isTablet ? 17 :15,
       marginTop: 2,
       fontWeight: '400',
     },
     activityStats: {
       alignItems: 'flex-end',
       justifyContent: 'center',
-      minWidth: 90,
+      minWidth: isTablet ? 100 : 90,
     },
     kmText: {
       fontWeight: 'bold',
-      fontSize: 17,
+      fontSize: isTablet ? 19 : 17,
       color: theme.text,
     },
     kcalRow: {
@@ -180,7 +187,7 @@ const ProfileCalendarTab: React.FC = () => {
     },
     kcalText: {
       color: theme.thirdText,
-      fontSize: 15,
+      fontSize: isTablet ? 17 : 15,
       fontWeight: '400',
     },
   });

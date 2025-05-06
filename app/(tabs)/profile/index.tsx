@@ -14,6 +14,7 @@ import ProfileStatsTab from './components/ProfileStatsTab';
 import { Text } from 'react-native';
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function ProfileScreen() {
   const [activityStreak, setActivityStreak] = useState(0);
   const { isDarkMode } = useTheme();
   const theme = isDarkMode ? darkTheme : lightTheme;
+  const { isTablet } = useScreenDimensions();
 
   useEffect(() => {
     fetchUserProfile();

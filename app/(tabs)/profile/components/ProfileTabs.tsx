@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 interface ProfileTabsProps {
   activeTab: string;
@@ -11,6 +12,7 @@ interface ProfileTabsProps {
 const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, onTabChange }) => {
   const { isDarkMode } = useTheme();
   const theme = isDarkMode ? darkTheme : lightTheme;
+  const { isTablet } = useScreenDimensions();
 
   const tabs = [
     { id: 'calendar', label: 'Kalendár' },
@@ -27,14 +29,14 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, onTabChange }) => 
     tab: {
       flex: 1,
       alignItems: 'center',
-      paddingVertical: 12,
+      paddingVertical: isTablet ? 16 : 12,
       position: 'relative',
     },
     activeTab: {
       backgroundColor: theme.background,
     },
     tabText: {
-      fontSize: 14,
+      fontSize: isTablet ? 16 : 14,
       fontWeight: '500',
       color: theme.text,
     },

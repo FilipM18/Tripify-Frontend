@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image, Modal, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Image, Modal } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -7,11 +7,11 @@ import { useRouter } from 'expo-router';
 import { API_URL } from '../../../utils/constants';
 import { apiService } from '../../../utils/api';
 import { PhotoLocation, MemoryCluster } from '../../../utils/types';
-
-const { width, height } = Dimensions.get('window');
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 export default function MemoriesScreen() {
   const router = useRouter();
+  const { isTablet, width, height } = useScreenDimensions();
   const [region, setRegion] = useState({
     latitude: 48.1486, // Default: Bratislava
     longitude: 17.1077,
@@ -130,6 +130,90 @@ export default function MemoriesScreen() {
     setSelectedMemory(null);
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    map: {
+      width: '100%',
+      height: '100%',
+    },
+    markerContainer: {
+      alignItems: 'center',
+    },
+    singleMarker: {
+      width: isTablet ? 48 : 36,
+      height: isTablet ? 48 : 36,
+      borderRadius: isTablet ? 24 : 18,
+      backgroundColor: 'white',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: '#4CAF50',
+      overflow: 'hidden',
+    },
+    markerImage: {
+      width: isTablet ? 44 : 32,
+      height: isTablet ? 44 : 32,
+      borderRadius: isTablet ? 22 : 16,
+    },
+    clusterMarker: {
+      width: isTablet ? 48 : 36,
+      height: isTablet ? 48 : 36,
+      borderRadius: isTablet ? 24 : 18,
+      backgroundColor: '#4CAF50',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: 'white',
+    },
+    clusterText: {
+      color: 'white',
+      fontWeight: 'bold',
+      fontSize: isTablet ? 16 : 14,
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    },
+    modalContent: {
+      width: isTablet ? width * 0.7 : width * 0.9,
+      height: isTablet ? height * 0.8 : height * 0.7,
+      backgroundColor: 'black',
+      borderRadius: 10,
+      overflow: 'hidden',
+    },
+    closeButton: {
+      position: 'absolute',
+      top: isTablet ? 20 : 10,
+      right: isTablet ? 20 : 10,
+      zIndex: 10,
+      width: isTablet ? 48 : 36,
+      height: isTablet ? 48 : 36,
+      borderRadius: isTablet ? 24 : 18,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    photoContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    fullImage: {
+      width: '100%',
+      height: isTablet ? '80%' : '90%',
+    },
+    description: {
+      color: 'white',
+      padding: isTablet ? 16 : 10,
+      textAlign: 'center',
+      fontSize: isTablet ? 18 : 14,
+    }
+  });
+
   return (
     <View style={styles.container}>
       <MapView
@@ -172,7 +256,7 @@ export default function MemoriesScreen() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
-              <Ionicons name="close" size={24} color="white" />
+              <Ionicons name="close" size={isTablet ? 28 : 24} color="white" />
             </TouchableOpacity>
             
             {selectedMemory && (
@@ -192,86 +276,6 @@ export default function MemoriesScreen() {
       </Modal>
     </View>
   );
-}
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  map: {
-    width: '100%',
-    height: '100%',
-  },
-  markerContainer: {
-    alignItems: 'center',
-  },
-  singleMarker: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#4CAF50',
-    overflow: 'hidden',
-  },
-  markerImage: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  clusterMarker: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#4CAF50',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  clusterText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-  },
-  modalContent: {
-    width: width * 0.9,
-    height: height * 0.7,
-    backgroundColor: 'black',
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 10,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  photoContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fullImage: {
-    width: '100%',
-    height: '90%',
-  },
-  description: {
-    color: 'white',
-    padding: 10,
-    textAlign: 'center',
-  }
-});
+  
+}

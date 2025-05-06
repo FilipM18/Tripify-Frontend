@@ -9,13 +9,14 @@ import {
   Switch,
   ScrollView 
 } from 'react-native';
-import { useTheme } from '../../ThemeContext'; // Adjust path as needed
-import { lightTheme, darkTheme } from '../../theme'; // Adjust path as needed
-
+import { useTheme } from '../../ThemeContext'; 
+import { lightTheme, darkTheme } from '../../theme'; 
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 export default function SettingsScreen() {
   const { isDarkMode, toggleTheme } = useTheme();
   const theme = isDarkMode ? darkTheme : lightTheme;
+  const { isTablet } = useScreenDimensions();
 
   const styles = StyleSheet.create({
     container: {
@@ -23,7 +24,7 @@ export default function SettingsScreen() {
       backgroundColor: theme.background,
     },
     header: {
-      padding: 16,
+      padding: isTablet ? 20: 16,
       backgroundColor: theme.card,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
@@ -31,7 +32,7 @@ export default function SettingsScreen() {
       alignItems: 'center',
     },
     headerTitle: {
-      fontSize: 20,
+      fontSize: isTablet ? 24 : 20,
       fontWeight: 'bold',
       color: theme.text,
     },
@@ -41,21 +42,21 @@ export default function SettingsScreen() {
     menuItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 16,
+      padding: isTablet ? 20 : 16,
       backgroundColor: theme.card,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
     },
     menuText: {
-      fontSize: 16,
-      marginLeft: 16,
+      fontSize: isTablet ? 20: 16,
+      marginLeft: isTablet ? 20 : 16,
       color: theme.text,
     },
     spacer: {
       flex: 1,
     },
     arrow: {
-      fontSize: 16,
+      fontSize: isTablet ? 20 : 16,
       color: theme.text,
     },
   });

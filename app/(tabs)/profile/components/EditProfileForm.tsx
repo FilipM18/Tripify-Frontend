@@ -14,6 +14,7 @@ import { API_URL } from '@/utils/constants';
 import { UserProfile } from '@/utils/types';
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 interface EditProfileFormProps {
   userProfile: UserProfile;
@@ -36,7 +37,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
   );
   const [imageFile, setImageFile] = useState<string | null>(null);
   const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme; 
+  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { isTablet } = useScreenDimensions();
 
   const pickImage = async () => {
     try {
@@ -103,27 +105,26 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
 
   const styles = StyleSheet.create({
     container: {
-      padding: 16,
+      padding: isTablet ? 24 : 16,
       backgroundColor: theme.secondBackground,
     },
     imageSection: {
       alignItems: 'center',
-      marginBottom: 24,
+      marginBottom: isTablet ? 32 : 24,
     },
     imageContainer: {
       position: 'relative', 
-      marginBottom: 8,
-
+      marginBottom: isTablet ? 12 : 8,
     },
     profileImage: {
-      width: 120,
-      height: 120,
-      borderRadius: 60,
+      width: isTablet ? 160 : 120,
+      height: isTablet ? 160 : 120,
+      borderRadius: isTablet ? 80 : 60,
     },
     placeholderImage: {
-      width: 120,
-      height: 120,
-      borderRadius: 60,
+      width: isTablet ? 160 : 120,
+      height: isTablet ? 160 : 120,
+      borderRadius: isTablet ? 80 : 60,
       backgroundColor: theme.background,
       justifyContent: 'center',
       alignItems: 'center',
@@ -133,52 +134,52 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
       bottom: 0,
       right: 0,
       backgroundColor: theme.primary,
-      borderRadius: 15,
-      width: 30,
-      height: 30,
+      borderRadius: isTablet ? 20 : 15,
+      width: isTablet ? 40 : 30,
+      height: isTablet ? 40 : 30,
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 2,
       borderColor: theme.border,
     },
     formSection: {
-      marginBottom: 24,
+      marginBottom: isTablet ? 32 : 24,
     },
     inputGroup: {
-      marginBottom: 16,
+      marginBottom: isTablet ? 24 : 16,
     },
     label: {
-      fontSize: 14,
+      fontSize: isTablet ? 16 : 14,
       fontWeight: '500',
-      marginBottom: 6,
+      marginBottom: isTablet ? 8 : 6,
       color: theme.text,
     },
     input: {
       borderWidth: 1,
       borderColor: theme.border,
       borderRadius: 8,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      fontSize: 16,
+      paddingHorizontal: isTablet ? 16 : 12,
+      paddingVertical: isTablet ? 14 : 10,
+      fontSize: isTablet ? 18 : 16,
       color: theme.secondText,
     },
     passwordButton: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingVertical: 12,
+      paddingVertical: isTablet ? 16 : 12,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
     },
     passwordButtonText: {
-      fontSize: 16,
+      fontSize: isTablet ? 18 : 16,
       color: theme.primary,
       fontWeight: '500',
     },
     submitButton: {
       backgroundColor: theme.primary,
-      borderRadius: 8,
-      paddingVertical: 14,
+      borderRadius: isTablet ? 12 : 8,
+      paddingVertical: isTablet ? 18 : 14,
       alignItems: 'center',
     },
     disabledButton: {
@@ -186,7 +187,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
     },
     submitButtonText: {
       color: theme.text,
-      fontSize: 16,
+      fontSize: isTablet ? 18 : 16,
       fontWeight: '600',
     },
   });
@@ -199,11 +200,11 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
             <Image source={{ uri: profileImage }} style={styles.profileImage} />
           ) : (
             <View style={styles.placeholderImage}>
-              <Ionicons name="person" size={40} color={theme.secondText} />
+              <Ionicons name="person" size={isTablet ? 60 : 40} color={theme.secondText} />
             </View>
           )}
           <View style={styles.editImageButton}>
-            <Ionicons name="camera" size={18} color={theme.card} />
+            <Ionicons name="camera" size={isTablet ? 24 : 18} color={theme.card} />
           </View>
         </TouchableOpacity>
       </View>
@@ -251,7 +252,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           onPress={onPasswordChangeRequest}
         >
           <Text style={styles.passwordButtonText}>Zmeň heslo</Text>
-          <Ionicons name="chevron-forward" size={18} color={theme.primary} />
+          <Ionicons name="chevron-forward" size={isTablet ? 22 : 18} color={theme.primary} />
         </TouchableOpacity>
       </View>
 
@@ -261,7 +262,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
         disabled={isSubmitting}
       >
         {isSubmitting ? (
-          <ActivityIndicator color="#fff" size="small" />
+          <ActivityIndicator color="#fff" size={isTablet ? "large" : "small"} />
         ) : (
           <Text style={styles.submitButtonText}>Ulož zmeny</Text>
         )}
