@@ -105,6 +105,8 @@ getAllGeoPhotos: async () => {
     averagePace: number;
     route: Array<{latitude: number; longitude: number}>;
     type: string;
+    title?: string;
+    info?: string;
   }) => {
     const token = await getToken();
     if (!token) throw new Error('No authentication token found');

@@ -16,9 +16,9 @@ export default function PhotoButton({ onPress, disabled }: PhotoButtonProps) {
   const styles = StyleSheet.create({
     button: {
       position: 'absolute',
-      bottom: 100,  // Position above the action button
+      bottom: 100,  
       right: 20,
-      backgroundColor: '#aaa' ,
+      backgroundColor: '#aaa',
 
       width: 56,
       height: 56,

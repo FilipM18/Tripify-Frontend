@@ -5,6 +5,7 @@ import StatsDisplay from './components/StatsDisplay';
 import ActionButtons from './components/ActionButton';
 import ActivityPicker from './components/ActivityPicker';
 import PhotoButton from './components/PhotoButton';
+import TripSaveModal from './components/TripSaveModal';
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
 import { useTrip } from '@/hooks/useTrip';
@@ -32,10 +33,14 @@ export default function RecordTripScreen() {
     isRecording,
     photos,
     selectedActivity,
+    showSaveModal,
+    uploadInProgress,
     startRecording,
     stopRecording,
     takePhoto,
     setSelectedActivity,
+    saveTripWithDetails,
+    cancelSaveModal
   } = useTrip();
 
   return (
@@ -56,17 +61,11 @@ export default function RecordTripScreen() {
         pace={pace}
       />
       
-      {/* Activity picker (you may need to position this as well) */}
+      {/* Activity picker */}
       <ActivityPicker 
         selectedActivity={selectedActivity}
         onSelectActivity={setSelectedActivity}
         disabled={isRecording}
-      />
-
-      {/* Photo button at bottom right */}
-      <PhotoButton 
-        onPress={takePhoto}
-        disabled={!isRecording}
       />
       
       {/* Action button at bottom center */}
@@ -75,7 +74,22 @@ export default function RecordTripScreen() {
         onStart={startRecording}
         onStop={stopRecording}
       />
+
+      {/* Photo button at bottom right */}
+      <PhotoButton 
+        onPress={takePhoto}
+        disabled={!isRecording}
+      />
+
+      {/* Trip Save Modal */}
+      <TripSaveModal
+        visible={showSaveModal}
+        onClose={cancelSaveModal}
+        onSave={saveTripWithDetails}
+        isLoading={uploadInProgress}
+        distance={totalDistance}
+        duration={duration}
+      />
     </SafeAreaView>
   );
 }
-
