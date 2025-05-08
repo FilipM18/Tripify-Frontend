@@ -8,6 +8,7 @@ import { getToken } from '@/utils/auth';
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
+import { useWebSocket } from '@/utils/WebSocketContext';
 
 type Trip = {
   id: number;
@@ -35,10 +36,11 @@ type TripCardProps = {
 const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(Number(trip.likes_count));
+  const [commentCount, setCommentCount] = useState(Number(trip.comments_count));
   const { isTablet, width } = useScreenDimensions();
   const { isDarkMode } = useTheme();
   const theme = isDarkMode ? darkTheme : lightTheme;
-
+  const { subscribe } = useWebSocket();
   
   const CARD_WIDTH = isTablet ? Math.min(600, width * 0.8) : width - 32;
   const MAP_HEIGHT = isTablet ? 220 : 180;
@@ -63,7 +65,28 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
     };
     
     checkIfLiked();
-  }, [trip.id]);
+
+    const unsubscribe = subscribe('like-update', (data) => {
+      if (data.contentType === 'trip' && data.contentId.toString() === trip.id.toString()) {
+        if (data.action === 'like') {
+          setLikeCount(prev => prev + 1);
+        } else {
+          setLikeCount(prev => Math.max(0, prev - 1));
+        }
+      }
+    });
+    
+    const commentUnsubscribe = subscribe('new-comment', (data) => {
+      if (data.tripId.toString() === trip.id.toString()) {
+        setCommentCount(prev => prev + 1);
+      }
+    });
+    
+    return () => {
+      unsubscribe();
+      commentUnsubscribe();
+    };
+  }, [trip.id, subscribe]);
 
   const handleLike = async (tripId: number, type: string) => {
     try {
@@ -71,7 +94,6 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
       if (!data.success) throw new Error(data.error || 'Nastala chyba');
       
       setIsLiked(!isLiked);
-      setLikeCount(prevCount => isLiked ? prevCount - 1 : prevCount + 1);
     } catch (err: any) {
       console.error(err.message);
     }
@@ -412,7 +434,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
         <TouchableOpacity style={styles.footerItem} onPress={onPress}>
           <View style={styles.footerItem}>
             <Ionicons name="chatbubble-outline" size={22} color={theme.text} />
-            <Text style={styles.footerText}>{trip.comments_count}</Text>
+            <Text style={styles.footerText}>{commentCount}</Text>
           </View>
         </TouchableOpacity>
 

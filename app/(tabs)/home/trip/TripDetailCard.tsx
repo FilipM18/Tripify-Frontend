@@ -20,6 +20,7 @@ import { router } from "expo-router";
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
+import { useWebSocket } from "@/utils/WebSocketContext";
 
 
 function geoJsonToLatLngs(route: { coordinates: [any, any][] }) {
@@ -52,7 +53,8 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
   const { isDarkMode } = useTheme();
   const theme = isDarkMode ? darkTheme : lightTheme;
   const { isTablet, width } = useScreenDimensions();
-
+  const { subscribe } = useWebSocket();
+  
   const MAP_HEIGHT = isTablet ? 420 : 340;
   const contentWidth = isTablet ? Math.min(700, width * 0.85) : width;
 
@@ -81,7 +83,39 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
       //setIsLiked(isLiked);
     }
     checkIfLiked();
-  }, [trip.id]);
+
+    const unsubscribe = subscribe('like-update', async (data) => {
+      if (data.contentType === 'trip' && data.contentId.toString() === trip.id.toString()) {
+        if (data.action === 'like') {
+          setLikeCount(prev => prev + 1);
+        } else {
+          setLikeCount(prev => Math.max(0, prev - 1));
+        }
+        
+
+        const token = await getToken();
+        if (token) {
+          const user = await verifyToken(token);
+          if (user.user.id !== data.userId) {
+            const likesData = await getLikes(trip.id, "trip");
+            const isCurrentlyLiked = likesData.likes.includes(user.user.id);
+            setIsLiked(isCurrentlyLiked);
+          }
+        }
+      }
+    });
+    
+    const commentUnsubscribe = subscribe('new-comment', (data) => {
+      if (data.tripId.toString() === trip.id.toString()) {
+        setCommentCount(prev => prev + 1);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      commentUnsubscribe();
+    };
+  }, [trip.id, subscribe]);
 
   const hasPhotos = trip.photo_urls && trip.photo_urls.length > 0;
   const formatDuration = (seconds: number) => {
@@ -101,7 +135,6 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
       if (!data.success) throw new Error(data.error || 'Failed to like trip');
 
       setIsLiked(!isLiked);
-      setLikeCount(prevCount => isLiked ? prevCount - 1 : prevCount + 1);
     } catch (err: any) {
       console.error(err.message);
     }
@@ -132,7 +165,6 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
     try {
       const result = await addComment(trip.id, comment);
       if (result.success) {
-        setCommentCount(prevCount => prevCount + 1);
         setRefreshComments(prev => !prev);
         setComment("");
         

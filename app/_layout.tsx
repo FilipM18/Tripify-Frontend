@@ -4,6 +4,7 @@ import { getToken, removeToken } from '../utils/auth';
 import { verifyToken } from '@/utils/api';
 import { ThemeProvider } from '../app/ThemeContext';
 import React from 'react';
+import { WebSocketProvider } from '@/utils/WebSocketContext';
 
 export default function RootLayout() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -42,14 +43,16 @@ export default function RootLayout() {
   if (authenticated === null) return null;
 
   return (
-    <ThemeProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        {authenticated ? (
-          <Stack.Screen name="(tabs)" />
-        ) : (
-          <Stack.Screen name="(auth)" />
-        )}
-      </Stack>
-    </ThemeProvider>
+    <WebSocketProvider>
+      <ThemeProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          {authenticated ? (
+            <Stack.Screen name="(tabs)" />
+          ) : (
+            <Stack.Screen name="(auth)" />
+          )}
+        </Stack>
+      </ThemeProvider>
+    </WebSocketProvider>
   );
 }

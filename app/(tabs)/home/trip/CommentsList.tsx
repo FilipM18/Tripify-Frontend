@@ -1,10 +1,11 @@
-// Ešte poriadne nefunguje bude treba opraviť
+// Už asi hej
 import { fetchComments } from '@/utils/api';
 import { getToken } from '@/utils/auth';
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Image } from 'react-native';
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
+import { useWebSocket } from '@/utils/WebSocketContext';
 
 const CommentsSection = ({ tripId, refreshTrigger }: { tripId: string, refreshTrigger?: any }) => {
   const [comments, setComments] = useState<any[]>([]);
@@ -12,15 +13,16 @@ const CommentsSection = ({ tripId, refreshTrigger }: { tripId: string, refreshTr
   const [error, setError] = useState<string | null>(null);
   const { isDarkMode } = useTheme();
   const theme = isDarkMode ? darkTheme : lightTheme;
-
+  const { subscribe } = useWebSocket();
+  
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         const token = await getToken();
-        if (!token) throw new Error('Not authenticated');
+        if (!token) throw new Error('Nemáte prístup');
         const data = await fetchComments(tripId, token);
-        if (!data.success) throw new Error(data.error || 'Failed to fetch comments');
+        if (!data.success) throw new Error(data.error || 'Chyba pri načítaní komentárov');
         setComments(data.comments || []);
       } catch (err: any) {
         setError(err.message);
@@ -29,12 +31,30 @@ const CommentsSection = ({ tripId, refreshTrigger }: { tripId: string, refreshTr
       }
     };
     fetchData();
-  }, [tripId, refreshTrigger]);
+
+     const unsubscribe = subscribe('new-comment', (data) => {
+      if (data.tripId.toString() === tripId) {
+        setComments(prevComments => [
+          ...prevComments,
+          {
+            userId: data.username,
+            userPhotoUrl: data.userPhotoUrl,
+            commentText: data.commentText,
+            createdAt: data.createdAt
+          }
+        ]);
+      }
+    });
+    
+    return () => {
+      unsubscribe();
+    };
+  }, [tripId, refreshTrigger, subscribe]);
   
 
   if (loading) return <ActivityIndicator />;
   if (error) return <Text style={{ color: 'red' }}>{error}</Text>;
-  if (!comments.length) return <Text style={{color: theme.secondText}}>No comments yet.</Text>;
+  if (!comments.length) return <Text style={{color: theme.secondText}}>Zatiaľ žiadne komentáre</Text>;
 
   const styles = StyleSheet.create({
     commentItem: { padding: 10, borderBottomWidth: 1, borderBottomColor:  theme.secondText},
