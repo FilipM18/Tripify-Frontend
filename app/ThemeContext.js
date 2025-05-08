@@ -1,3 +1,4 @@
+// ThemeContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,7 +10,6 @@ export const ThemeProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load saved theme preference when app starts
   useEffect(() => {
     loadThemePreference();
   }, []);
@@ -20,7 +20,6 @@ export const ThemeProvider = ({ children }) => {
       if (savedTheme !== null) {
         setIsDarkMode(savedTheme === 'dark');
       } else {
-        // Use device theme as default if no saved preference
         setIsDarkMode(deviceTheme === 'dark');
       }
     } catch (error) {
@@ -48,3 +47,5 @@ export const ThemeProvider = ({ children }) => {
 };
 
 export const useTheme = () => useContext(ThemeContext);
+
+export default ThemeProvider;

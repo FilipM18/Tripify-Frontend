@@ -51,9 +51,9 @@ export const apiService = {
     return handleResponse(response);
   },
 
-getAllGeoPhotos: async () => {
-  const token = await getToken();
-  if (!token) throw new Error('No authentication token found');
+  getAllGeoPhotos: async () => {
+    const token = await getToken();
+    if (!token) throw new Error('No authentication token found');
   
 
   // Get user's trips
@@ -124,105 +124,105 @@ getAllGeoPhotos: async () => {
   },
 
 // Upload a photo to a trip
-uploadTripPhoto: async ({
-  tripId,
-  userId,
-  uri,
-  latitude,
-  longitude,
-  description,
-}: {
-  tripId: number | string;
-  userId: string;
-  uri: string;
-  latitude: number;
-  longitude: number;
-  description?: string;
-}) => {
-  const token = await getToken();
-  if (!token) throw new Error('No authentication token found');
-  
-  const formData = new FormData();
-  formData.append('photo', {
+  uploadTripPhoto: async ({
+    tripId,
+    userId,
     uri,
-    name: 'photo.jpg',
-    type: 'image/jpeg',
-  } as any);
-  
-  formData.append('userId', userId);
-  formData.append('latitude', latitude.toString());
-  formData.append('longitude', longitude.toString());
-  if (description) formData.append('description', description);
-
-  const response = await fetch(`${API_URL}/trips/${tripId}/photos`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data',
-    },
-    body: formData,
-  });
-  
-  return handleResponse(response);
-},
-
-getUserActivityStreak: async () => {
-  const token = await getToken();
-  if (!token) throw new Error('No authentication token found');
-
-  const tripsData = await apiService.getUserTrips();
-  if (!tripsData.success || !tripsData.trips || tripsData.trips.length === 0) {
-    return { streak: 0, lastActivityDate: null };
-  }
-
-  const sortedTrips = tripsData.trips.sort((a: any, b: any) => 
-    new Date(b.ended_at).getTime() - new Date(a.ended_at).getTime()
-  );
-
-  const tripsByDay = new Map();
-  
-  sortedTrips.forEach((trip: any) => {
-    const tripDate = new Date(trip.ended_at);
-    const dateKey = tripDate.toISOString().split('T')[0];
+    latitude,
+    longitude,
+    description,
+  }: {
+    tripId: number | string;
+    userId: string;
+    uri: string;
+    latitude: number;
+    longitude: number;
+    description?: string;
+  }) => {
+    const token = await getToken();
+    if (!token) throw new Error('No authentication token found');
     
-    if (!tripsByDay.has(dateKey)) {
-      tripsByDay.set(dateKey, []);
+    const formData = new FormData();
+    formData.append('photo', {
+      uri,
+      name: 'photo.jpg',
+      type: 'image/jpeg',
+    } as any);
+    
+    formData.append('userId', userId);
+    formData.append('latitude', latitude.toString());
+    formData.append('longitude', longitude.toString());
+    if (description) formData.append('description', description);
+
+    const response = await fetch(`${API_URL}/trips/${tripId}/photos`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+      body: formData,
+    });
+    
+    return handleResponse(response);
+  },
+
+  getUserActivityStreak: async () => {
+    const token = await getToken();
+    if (!token) throw new Error('No authentication token found');
+
+    const tripsData = await apiService.getUserTrips();
+    if (!tripsData.success || !tripsData.trips || tripsData.trips.length === 0) {
+      return { streak: 0, lastActivityDate: null };
     }
-    tripsByDay.get(dateKey).push(trip);
-  });
 
-  const activityDates = Array.from(tripsByDay.keys()).sort().reverse();
-  
-  if (activityDates.length === 0) {
-    return { streak: 0, lastActivityDate: null };
-  }
+    const sortedTrips = tripsData.trips.sort((a: any, b: any) => 
+      new Date(b.ended_at).getTime() - new Date(a.ended_at).getTime()
+    );
 
-  let streak = 0;
-  const lastActivityDate = new Date(activityDates[0]);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const timeDiff = Math.floor((today.getTime() - lastActivityDate.getTime()) / (1000 * 3600 * 24));
-  
-  if (timeDiff > 1) {
-    return { streak: 0, lastActivityDate };
-  }
-  
-  let currentDate = new Date(lastActivityDate);
-  
-  while (activityDates.includes(currentDate.toISOString().split('T')[0])) {
-    streak++;
+    const tripsByDay = new Map();
     
-    currentDate.setDate(currentDate.getDate() - 1);
-    const dateStr = currentDate.toISOString().split('T')[0];
+    sortedTrips.forEach((trip: any) => {
+      const tripDate = new Date(trip.ended_at);
+      const dateKey = tripDate.toISOString().split('T')[0];
+      
+      if (!tripsByDay.has(dateKey)) {
+        tripsByDay.set(dateKey, []);
+      }
+      tripsByDay.get(dateKey).push(trip);
+    });
+
+    const activityDates = Array.from(tripsByDay.keys()).sort().reverse();
     
-    if (!activityDates.includes(dateStr)) {
-      break;
+    if (activityDates.length === 0) {
+      return { streak: 0, lastActivityDate: null };
     }
+
+    let streak = 0;
+    const lastActivityDate = new Date(activityDates[0]);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const timeDiff = Math.floor((today.getTime() - lastActivityDate.getTime()) / (1000 * 3600 * 24));
+    
+    if (timeDiff > 1) {
+      return { streak: 0, lastActivityDate };
+    }
+    
+    let currentDate = new Date(lastActivityDate);
+    
+    while (activityDates.includes(currentDate.toISOString().split('T')[0])) {
+      streak++;
+      
+      currentDate.setDate(currentDate.getDate() - 1);
+      const dateStr = currentDate.toISOString().split('T')[0];
+      
+      if (!activityDates.includes(dateStr)) {
+        break;
+      }
+    }
+    
+    return { streak, lastActivityDate };
   }
-  
-  return { streak, lastActivityDate };
-}
   
 };
 
@@ -332,7 +332,6 @@ export async function fetchComments(tripId: string | number, token: string) {
 
 
 export const updateUserProfile = async (
-  userId: string, 
   username?: string, 
   email?: string, 
   phoneNumber?: string, 
@@ -363,10 +362,13 @@ export const updateUserProfile = async (
       } as any);
     }
     
+    console.log('Sending form data to server:', JSON.stringify(formData));
+    
     const response = await fetch(`${API_URL}/auth/profile`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
+        // Don't set Content-Type for FormData
       },
       body: formData,
     });
@@ -378,6 +380,7 @@ export const updateUserProfile = async (
     throw error;
   }
 };
+
 
 export const changePassword = async (currentPassword: string, newPassword: string) => {
   try {

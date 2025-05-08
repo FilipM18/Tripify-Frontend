@@ -6,7 +6,7 @@ export default function AuthLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: false, // Hide header for clean auth screens
+        headerShown: false,
       }}
     />
   );

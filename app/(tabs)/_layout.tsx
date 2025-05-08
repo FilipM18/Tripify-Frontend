@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../ThemeContext'; 
 import { lightTheme, darkTheme } from '../theme'; 
+import React from 'react';
 
 export default function TabLayout() {
   const { isDarkMode } = useTheme();

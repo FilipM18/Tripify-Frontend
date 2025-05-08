@@ -12,7 +12,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Please enter both email and password.');
+      Alert.alert('Chyba', 'Prosím vyplňte všetky polia.');
       return;
     }
     setLoading(true);
@@ -22,13 +22,13 @@ export default function LoginScreen() {
         await saveToken(data.token!);
         router.replace('/(tabs)/home');
       } else {
-        Alert.alert('Login failed', data.error || 'Unknown error');
+        Alert.alert('Prihlásenie zlyhalo', data.error || 'Neznáma chyba');
       }
     } catch (error) {
       if (error instanceof Error) {
-        Alert.alert('Signup failed', error.message);
+        Alert.alert('Prihlásenie zlyhalo', error.message);
       } else {
-        Alert.alert('Signup failed', 'Unknown error');
+        Alert.alert('Prihlásenie zlyhalo', 'Neznáma chyba');
       }
     } finally {
       setLoading(false);
@@ -37,12 +37,12 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Log In</Text>
+      <Text style={styles.title}>Prihlásenie</Text>
       <TextInput placeholder="Email" value={email} onChangeText={setEmail} style={styles.input} keyboardType="email-address" />
-      <TextInput placeholder="Password" value={password} onChangeText={setPassword} style={styles.input} secureTextEntry />
-      <Button title={loading ? "Logging in..." : "Log In"} onPress={handleLogin} disabled={loading} />
+      <TextInput placeholder="Heslo" value={password} onChangeText={setPassword} style={styles.input} secureTextEntry />
+      <Button title={loading ? "Prihlasujem..." : "Prihlásiť sa"} onPress={handleLogin} disabled={loading} />
       <TouchableOpacity onPress={() => router.replace('/(auth)/signup')}>
-        <Text style={styles.switchText}>Don't have an account? Sign up</Text>
+        <Text style={styles.switchText}>Ešte nemáš účet? Registruj sa!</Text>
       </TouchableOpacity>
     </View>
   );

@@ -54,17 +54,17 @@ export default function StatsDisplay({ duration, distance, pace }: StatsDisplayP
     <View style={styles.container}>
       <View style={styles.statBox}>
         <Text style={styles.statValue}>{formatDuration(duration)}</Text>
-        <Text style={styles.statLabel}>Time</Text>
+        <Text style={styles.statLabel}>Čas</Text>
       </View>
       
       <View style={styles.statBox}>
         <Text style={styles.statValue}>{distance.toFixed(2)}</Text>
-        <Text style={styles.statLabel}>Distance (km)</Text>
+        <Text style={styles.statLabel}>Vzdialenosť (km)</Text>
       </View>
       
       <View style={styles.statBox}>
         <Text style={styles.statValue}>{pace.toFixed(1)}</Text>
-        <Text style={styles.statLabel}>Pace (km/h)</Text>
+        <Text style={styles.statLabel}>Tempo (km/h)</Text>
       </View>
     </View>
   );

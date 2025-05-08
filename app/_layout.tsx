@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { getToken, removeToken } from '../utils/auth';
 import { verifyToken } from '@/utils/api';
-import { ThemeProvider } from '../app/ThemeContext'; // Adjust the import path as needed
+import { ThemeProvider } from '../app/ThemeContext';
 import React from 'react';
 
 export default function RootLayout() {
@@ -10,28 +10,36 @@ export default function RootLayout() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = await getToken();
-      if (!token) {
-        setAuthenticated(false);
-        return;
-      }
       try {
+        const token = await getToken();
+        if (!token) {
+          console.log("No token found");
+          setAuthenticated(false);
+          return;
+        }
+        
+        console.log("Token found, verifying...");
         const data = await verifyToken(token);
+        
         if (data.success) {
+          console.log("Token valid");
           setAuthenticated(true);
         } else {
+          console.log("Token invalid");
           await removeToken();
           setAuthenticated(false);
         }
-      } catch {
+      } catch (error) {
+        console.error("Auth check error:", error);
         await removeToken();
         setAuthenticated(false);
       }
     };
+    
     checkAuth();
   }, []);
 
-  if (authenticated === null) return null; // Or a splash/loading screen
+  if (authenticated === null) return null;
 
   return (
     <ThemeProvider>

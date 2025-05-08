@@ -43,10 +43,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   startButton: {
-    backgroundColor: 'rgba(76, 175, 80, 0.9)', // Semi-transparent green
+    backgroundColor: 'rgba(76, 175, 80, 0.9)',
   },
   stopButton: {
-    backgroundColor: 'rgba(244, 67, 54, 0.9)', // Semi-transparent red
+    backgroundColor: 'rgba(244, 67, 54, 0.9)',
   },
   buttonText: {
     color: 'white',

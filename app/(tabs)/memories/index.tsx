@@ -8,6 +8,7 @@ import { API_URL } from '../../../utils/constants';
 import { apiService } from '../../../utils/api';
 import { PhotoLocation, MemoryCluster } from '../../../utils/types';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
+import { getToken } from '@/utils/auth';
 
 export default function MemoriesScreen() {
   const router = useRouter();
@@ -28,18 +29,24 @@ export default function MemoriesScreen() {
   const fetchAllPhotos = async () => {
     try {
       setLoading(true);
+      const token = await getToken();
+      if (!token) {
+        router.replace('/(auth)/login');
+        return;
+      }
+      
       const photoData = await apiService.getAllGeoPhotos();
       const parsedPhotoData = photoData.map(photo => ({
         ...photo,
         latitude: typeof photo.latitude === 'string' ? parseFloat(photo.latitude) : photo.latitude,
         longitude: typeof photo.longitude === 'string' ? parseFloat(photo.longitude) : photo.longitude,
       }));
-      console.log('[fetchAllPhotos] Parsed photo data:', parsedPhotoData);
+      //console.log('[fetchAllPhotos] Parsed photo data:', parsedPhotoData);
       setPhotos(parsedPhotoData);
       const clusters = clusterPhotos(parsedPhotoData);
       setMemoryClusters(clusters);
     } catch (error) {
-      console.error('Error fetching photos:', error);
+      //console.error('Error fetching photos:', error);
       setErrorMsg('Failed to load memories');
     } finally {
       setLoading(false);
@@ -65,8 +72,7 @@ export default function MemoriesScreen() {
       } catch (error) {
         console.error('Error getting location:', error);
       }
-      
-      // Fetch all photos
+
       fetchAllPhotos();
     })();
   }, []);
@@ -276,6 +282,4 @@ export default function MemoriesScreen() {
       </Modal>
     </View>
   );
-
-  
 }

@@ -43,7 +43,6 @@ const TripSaveModal: React.FC<TripSaveModalProps> = ({
   };
 
   const handleSave = () => {
-    // Set default title if empty
     const finalTitle = title.trim() || `Trip ${new Date().toLocaleDateString('sk-SK')}`;
     onSave(finalTitle, description);
   };
@@ -61,20 +60,20 @@ const TripSaveModal: React.FC<TripSaveModalProps> = ({
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
           <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
-            <Text style={[styles.title, { color: theme.text }]}>Save Your Trip</Text>
+            <Text style={[styles.title, { color: theme.text }]}>Ulož svôj výlet</Text>
             
             <View style={[styles.statsContainer, { backgroundColor: theme.statBackground }]}>
               <View style={styles.statBox}>
                 <Text style={[styles.statValue, { color: theme.text }]}>{distance.toFixed(2)} km</Text>
-                <Text style={[styles.statLabel, { color: theme.thirdText }]}>Distance</Text>
+                <Text style={[styles.statLabel, { color: theme.thirdText }]}>Vzdialenosť</Text>
               </View>
               <View style={styles.statBox}>
                 <Text style={[styles.statValue, { color: theme.text }]}>{formatDuration(duration)}</Text>
-                <Text style={[styles.statLabel, { color: theme.thirdText }]}>Duration</Text>
+                <Text style={[styles.statLabel, { color: theme.thirdText }]}>Trvanie</Text>
               </View>
             </View>
             
-            <Text style={[styles.inputLabel, { color: theme.text }]}>Trip Name</Text>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>Názov výletu</Text>
             <TextInput
               style={[styles.input, { 
                 borderColor: theme.border, 
@@ -88,14 +87,14 @@ const TripSaveModal: React.FC<TripSaveModalProps> = ({
               maxLength={50}
             />
             
-            <Text style={[styles.inputLabel, { color: theme.text }]}>Description</Text>
+            <Text style={[styles.inputLabel, { color: theme.text }]}>Popis</Text>
             <TextInput
               style={[styles.input, styles.descriptionInput, { 
                 borderColor: theme.border, 
                 backgroundColor: theme.background,
                 color: theme.text 
               }]}
-              placeholder="Enter trip description (optional)"
+              placeholder="Zadaj popis výletu"
               placeholderTextColor={theme.thirdText}
               value={description}
               onChangeText={setDescription}
@@ -109,7 +108,7 @@ const TripSaveModal: React.FC<TripSaveModalProps> = ({
                 onPress={onClose}
                 disabled={isLoading}
               >
-                <Text style={[styles.buttonText, styles.cancelText, { color: theme.text }]}>Cancel</Text>
+                <Text style={[styles.buttonText, styles.cancelText, { color: theme.text }]}>Zrušiť</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
@@ -120,7 +119,7 @@ const TripSaveModal: React.FC<TripSaveModalProps> = ({
                 {isLoading ? (
                   <ActivityIndicator color="#ffffff" />
                 ) : (
-                  <Text style={[styles.buttonText, styles.saveText]}>Save Trip</Text>
+                  <Text style={[styles.buttonText, styles.saveText]}>Ulož výlet</Text>
                 )}
               </TouchableOpacity>
             </View>

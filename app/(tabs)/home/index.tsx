@@ -16,14 +16,37 @@ import { useTheme } from "../../ThemeContext";
 import { lightTheme, darkTheme } from "../../theme"; 
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
+type Trip = {
+  id: number;
+  title: string;
+  photo_urls?: string[];
+  username: string;
+  ended_at: string;
+  distance_km: number;
+  duration_seconds: number;
+  average_pace: string;
+  likes_count: number;
+  comments_count: number;
+  route: {
+    type: string;
+    coordinates: [number, number][];
+  };
+};
+
+
 const TripsScreen = ({ token }: { token: string }) => {
-  const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { isDarkMode } = useTheme();
   const theme = isDarkMode ? darkTheme : lightTheme;
   const { isTablet } = useScreenDimensions();
+  const [trips, setTrips] = useState<Trip[]>([]);
+
+  const handleDeleteTrip = (tripId: number) => {
+    setTrips(prevTrips => prevTrips.filter(trip => trip.id !== tripId));
+  };
+  
 
   const styles = StyleSheet.create({
     centered: {
@@ -78,16 +101,23 @@ const TripsScreen = ({ token }: { token: string }) => {
     const loadTrips = async () => {
       const token = await getToken();
       if (!token) {
-        setError("Not authenticated");
+        setError("Nemáte prístup");
         setLoading(false);
         return;
       }
       try {
+        setLoading(true);
+        const token = await getToken();
+        if (!token) {
+          router.replace('/(auth)/login');
+          return;
+        }
+
         const response = await fetchAllTrips(token);
         if (response.success) {
           setTrips(response.trips);
         } else {
-          setError(response.error || "Failed to load trips");
+          setError(response.error || "Nastala chyba");
         }
       } catch (err: any) {
         setError(err.message);
@@ -131,6 +161,7 @@ const TripsScreen = ({ token }: { token: string }) => {
           <TripCard
             trip={item}
             onPress={() => router.push(`/home/trip/TripDetail?tripId=${item.id}`)}
+            onDeleteTrip={handleDeleteTrip}
           />
         )}
         contentContainerStyle={styles.list}

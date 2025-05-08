@@ -10,13 +10,14 @@ export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [password2, setPassword2] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images', // Use 'images' instead of the enum
+      mediaTypes: 'images', 
       allowsEditing: true,
       quality: 0.7,
     });
@@ -33,7 +34,11 @@ export default function SignupScreen() {
 
   const handleSignup = async () => {
     if (!username || !email || !password) {
-      Alert.alert('Please fill all required fields.');
+      Alert.alert('Chyba', 'Prosím vyplňte všetky povinné polia.');
+      return;
+    }
+    if (password !== password2) {
+      Alert.alert('Chyba', 'Heslá sa nezhodujú. Prosím skontrolujte ich.');
       return;
     }
     setLoading(true);
@@ -58,13 +63,13 @@ export default function SignupScreen() {
         await saveToken(data.token!);
         router.replace('/(tabs)/home');
       } else {
-        Alert.alert('Signup failed', data.error || 'Unknown error');
+        Alert.alert('Registrácia zlyhala', data.error || 'Neznáma chyba');
       }
     } catch (error) {
       if (error instanceof Error) {
-        Alert.alert('Signup failed', error.message);
+        Alert.alert('Registrácia zlyhala', error.message);
       } else {
-        Alert.alert('Signup failed', 'Unknown error');
+        Alert.alert('Registrácia zlyhala', 'Neznáma chyba');
       }
     } finally {
       setLoading(false);
@@ -73,18 +78,19 @@ export default function SignupScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sign Up</Text>
+      <Text style={styles.title}>Registrácia</Text>
       <TextInput placeholder="Username" value={username} onChangeText={setUsername} style={styles.input} />
       <TextInput placeholder="Email" value={email} onChangeText={setEmail} style={styles.input} keyboardType="email-address" />
-      <TextInput placeholder="Phone Number" value={phoneNumber} onChangeText={setPhoneNumber} style={styles.input} keyboardType="phone-pad" />
-      <TextInput placeholder="Password" value={password} onChangeText={setPassword} style={styles.input} secureTextEntry />
+      <TextInput placeholder="Tel. číslo" value={phoneNumber} onChangeText={setPhoneNumber} style={styles.input} keyboardType="phone-pad" />
+      <TextInput placeholder="Heslo" value={password} onChangeText={setPassword} style={styles.input} secureTextEntry />
+      <TextInput placeholder="Zopakuj heslo" value={password2} onChangeText={setPassword2} style={styles.input} secureTextEntry />
       <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
-        <Text>Select Profile Photo</Text>
+        <Text>Vyber porfilovú fotku</Text>
         {photo && <Image source={{ uri: photo.uri }} style={{ width: 60, height: 60, borderRadius: 30 }} />}
       </TouchableOpacity>
-      <Button title={loading ? "Registering..." : "Sign Up"} onPress={handleSignup} disabled={loading} />
+      <Button title={loading ? "Registrácia..." : "Registruj sa"} onPress={handleSignup} disabled={loading} />
       <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
-        <Text style={styles.switchText}>Already have an account? Log in</Text>
+        <Text style={styles.switchText}>Už máš účet? Prihlás sa</Text>
       </TouchableOpacity>
     </View>
   );

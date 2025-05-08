@@ -4,11 +4,11 @@ import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
 
 const ACTIVITIES = [
-  { value: 'running', label: 'Running' },
-  { value: 'walking', label: 'Walking' },
-  { value: 'cycling', label: 'Cycling' },
-  { value: 'hiking', label: 'Hiking' },
-  { value: 'other', label: 'Other' }
+  { value: 'running', label: 'Beh' },
+  { value: 'walking', label: 'Chôdza' },
+  { value: 'cycling', label: 'Cyklistika' },
+  { value: 'hiking', label: 'Túra' },
+  { value: 'other', label: 'Ostatné' }
 ];
 
 interface ActivityPickerProps {
@@ -65,7 +65,7 @@ export default function ActivityPicker({ selectedActivity, onSelectActivity, dis
 
   return (
     <View style={[styles.container, disabled && styles.disabled]}>
-      <Text style={styles.label}>Activity:</Text>
+      <Text style={styles.label}>Aktivita:</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

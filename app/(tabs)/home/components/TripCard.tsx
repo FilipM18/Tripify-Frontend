@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { API_URL } from '@/utils/constants';
@@ -29,9 +29,10 @@ type Trip = {
 type TripCardProps = {
   trip: Trip;
   onPress: () => void;
+  onDeleteTrip: (tripId: number) => void;
 };
 
-const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
+const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(Number(trip.likes_count));
   const { isTablet, width } = useScreenDimensions();
@@ -47,10 +48,10 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
     const checkIfLiked = async () => {
       try {
         const data = await getLikes(trip.id, "trip");
-        if (!data.success) throw new Error(data.error || 'Failed to fetch likes');
+        if (!data.success) throw new Error(data.error || 'Nastala chyba');
         
         const token = await getToken();
-        if (!token) throw new Error('Not authenticated');
+        if (!token) throw new Error('Nemáte prístup');
         const user = await verifyToken(token);
         const userId = user.user.id;
         
@@ -67,9 +68,8 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
   const handleLike = async (tripId: number, type: string) => {
     try {
       const data = await hitLike(tripId, type);
-      if (!data.success) throw new Error(data.error || 'Failed to like trip');
+      if (!data.success) throw new Error(data.error || 'Nastala chyba');
       
-      // Toggle like state and update count numerically
       setIsLiked(!isLiked);
       setLikeCount(prevCount => isLiked ? prevCount - 1 : prevCount + 1);
     } catch (err: any) {
@@ -80,14 +80,54 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
   const getLike = async (tripId: number, type: string) => {
     try {
       const data = await getLikes(tripId, type);
-      if (!data.success) throw new Error(data.error || 'Failed to fetch likes');
+      if (!data.success) throw new Error(data.error || 'Nastala chyba');
       
-      console.log("Likes:", data.likes);
+      //console.log("Likes:", data.likes);
     } catch (err: any) {
       console.error(err.message);
     }
   };
   
+  const handleDeleteTrip = async () => {
+    try {
+      const token = await getToken();
+      if (!token) throw new Error('Nemáte prístup');
+      
+      const response = await fetch(`${API_URL}/trips/${trip.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        Alert.alert('Úspech', 'Výlet bol úspešne odstránený');
+
+        if (onDeleteTrip) {
+          onDeleteTrip(trip.id);
+        }
+      } else {
+        Alert.alert('Error', data.error || 'Nastala chyba pri odstraňovaní výletu');
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Error', 'Nepodarilo sa odstrániť výlet. Skúste to znova neskôr.');
+    }
+  };
+  
+  
+  const showDeleteConfirmation = () => {
+    Alert.alert(
+      'Vymazať výlet',
+      'Ste si istý, že chcete vymazať tento výlet? Táto akcia je nezvratná.',
+      [
+        { text: 'Zrušiť', style: 'cancel' },
+        { text: 'Vymazať', style: 'destructive', onPress: handleDeleteTrip }
+      ]
+    );
+  };
 
   const formatDuration = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -121,7 +161,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
       padding: 12,
       marginBottom: 20,
       width: CARD_WIDTH,
-      alignSelf: 'center', // Center the card on tablet
+      alignSelf: 'center',
       elevation: 3,
       shadowColor: theme.shadow,
       shadowOpacity: 0.07,
@@ -241,6 +281,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
   return (
     <View style={styles.card}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+
       {/* Header */}
         <View style={styles.header}>
           <Image
@@ -251,9 +292,14 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
             <Text style={styles.username} numberOfLines={1} ellipsizeMode="tail">{trip.username}</Text>
             <Text style={styles.date} numberOfLines={1} ellipsizeMode="tail">{formatted}</Text>
           </View>
-          <TouchableOpacity style={styles.menuButton}>
+
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={showDeleteConfirmation}
+          >
             <Ionicons name="ellipsis-vertical" size={20} color={theme.text} />
           </TouchableOpacity>
+
         </View>
 
         {/* Title */}
@@ -272,6 +318,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
           </Text>
         </View>
       </TouchableOpacity>
+
       {/* Map & Photo Gallery */}
       {hasPhotos ? (
         <ScrollView
@@ -280,6 +327,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
           style={styles.mediaScroll}
           contentContainerStyle={styles.mediaScrollContent}
         >
+
           {/* Map */}
           <View style={[styles.mapContainer, { width: mapWidth }]}>
             <MapView
@@ -304,6 +352,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
               />
             </MapView>
           </View>
+
           {/* Photos */}
           {(trip.photo_urls ?? []).map((url, idx) => (
             <Image
@@ -344,25 +393,29 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress }) => {
       {/* Footer: Likes, Comments, Share */}
       <View style={styles.footer}>
         <View style={styles.footerItem}>
-        <TouchableOpacity style={styles.footerItem} onPress={() => handleLike(trip.id, "trip")}>
-          <Ionicons 
-            name={isLiked ? "heart" : "heart-outline"} 
-            size={22} 
-            color={isLiked ? theme.primary : theme.text} 
-          />
-          <TouchableOpacity 
-            style={styles.footerItem} 
-            onPress={() => getLike(trip.id, "trip")}
-          >
-            <Text style={styles.footerText}>{likeCount}</Text>
-          </TouchableOpacity>
+          <TouchableOpacity style={styles.footerItem} onPress={() => handleLike(trip.id, "trip")}>
+            <Ionicons 
+              name={isLiked ? "heart" : "heart-outline"} 
+              size={22} 
+              color={isLiked ? theme.primary : theme.text} 
+            />
+            <TouchableOpacity 
+              style={styles.footerItem} 
+              onPress={() => getLike(trip.id, "trip")}
+            >
+              <Text style={styles.footerText}>{likeCount}</Text>
+            </TouchableOpacity>
 
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity style={styles.footerItem} onPress={onPress}>
+          <View style={styles.footerItem}>
+            <Ionicons name="chatbubble-outline" size={22} color={theme.text} />
+            <Text style={styles.footerText}>{trip.comments_count}</Text>
+          </View>
         </TouchableOpacity>
-        </View>
-        <View style={styles.footerItem}>
-          <Ionicons name="chatbubble-outline" size={22} color={theme.text} />
-          <Text style={styles.footerText}>{trip.comments_count}</Text>
-        </View>
+
         <TouchableOpacity style={styles.footerItem}>
           <MaterialCommunityIcons name="share-outline" size={22} color={theme.text} />
           <Text style={styles.footerText}>Share</Text>

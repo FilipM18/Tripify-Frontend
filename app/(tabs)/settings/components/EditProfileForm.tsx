@@ -18,15 +18,16 @@ import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 interface EditProfileFormProps {
   userProfile: UserProfile;
+  onCancel: () => void;
   onSubmit: (formData: FormData) => void;
-  onPasswordChangeRequest: () => void;
   isSubmitting: boolean;
+  
 }
 
 const EditProfileForm: React.FC<EditProfileFormProps> = ({
   userProfile,
+  onCancel,
   onSubmit,
-  onPasswordChangeRequest,
   isSubmitting
 }) => {
   const [username, setUsername] = useState(userProfile.username);
@@ -81,13 +82,19 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
       alert('Phone number must be 10 digits');
       return;
     }
-
+  
     const formData = new FormData();
-    formData.append('userId', userProfile.id);
     formData.append('username', username);
     formData.append('email', email);
-    formData.append('phoneNumber', phoneNumber);
-    
+    if (phoneNumber && phoneNumber.trim() !== '') {
+      formData.append('phoneNumber', phoneNumber);
+    }
+
+    [...formData.entries()].forEach(([key, value]) => {
+      if (value === '' || value === 'null' || value === 'undefined') {
+        formData.delete(key);
+      }
+    });
     if (imageFile) {
       const filename = imageFile.split('/').pop() || 'profile.jpg';
       const match = /\.(\w+)$/.exec(filename);
@@ -99,9 +106,12 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
         type,
       } as any);
     }
-    
+    console.log('Form data:', formData);
     onSubmit(formData);
   };
+  
+  
+  
 
   const styles = StyleSheet.create({
     container: {
@@ -180,6 +190,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
       backgroundColor: theme.primary,
       borderRadius: isTablet ? 12 : 8,
       paddingVertical: isTablet ? 18 : 14,
+      paddingHorizontal: isTablet ? 24 : 16,
       alignItems: 'center',
     },
     disabledButton: {
@@ -190,6 +201,10 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
       fontSize: isTablet ? 18 : 16,
       fontWeight: '600',
     },
+    buttonRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    cancelButton: { backgroundColor: theme.secondBackground, borderRadius: 8, paddingVertical: isTablet ? 16 : 12, paddingHorizontal: 16 },
+    cancelText: { color: theme.text, fontWeight: '500', fontSize: isTablet ? 16 : 12 },
+    submitText: { color: '#fff', fontWeight: '600', fontSize: isTablet ? 16 : 14 },
   });
 
   return (
@@ -246,27 +261,17 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
             maxLength={10}
           />
         </View>
-        
-        <TouchableOpacity 
-          style={styles.passwordButton}
-          onPress={onPasswordChangeRequest}
-        >
-          <Text style={styles.passwordButtonText}>Zmeň heslo</Text>
-          <Ionicons name="chevron-forward" size={isTablet ? 22 : 18} color={theme.primary} />
+      </View>
+
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={styles.cancelButton} onPress={onCancel} disabled={isSubmitting}>
+          <Text style={styles.cancelText}>Zrušiť</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={isSubmitting}>
+          {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Ulož zmeny</Text>}
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity 
-        style={[styles.submitButton, isSubmitting && styles.disabledButton]}
-        onPress={handleSubmit}
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" size={isTablet ? "large" : "small"} />
-        ) : (
-          <Text style={styles.submitButtonText}>Ulož zmeny</Text>
-        )}
-      </TouchableOpacity>
     </View>
   );
 };

@@ -30,8 +30,7 @@ export default function MemoryClusterScreen() {
     setModalVisible(false);
     setSelectedPhoto(null);
   };
-
-  // Format date for display
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('sk-SK', {

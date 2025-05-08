@@ -16,7 +16,6 @@ import { API_URL } from "@/utils/constants";
 import CommentsSection from "./CommentsList";
 import { getToken } from "@/utils/auth";
 import { addComment, getLikes, hitLike, verifyToken } from "@/utils/api";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 import { router } from "expo-router";
 import { useTheme } from '@/app/ThemeContext';
 import { lightTheme, darkTheme } from '@/app/theme';
@@ -59,18 +58,18 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
 
   useEffect(() => {
 
-    //Check if the trip is liked by the user
     const checkIfLiked = async () => {
       const data = await getLikes(trip.id, "trip");
-      console.log("data",data);
+      //console.log("data",data);
       if (!data.success) throw new Error(data.error || 'Failed to fetch likes');
-      // check if users id is in the list of likes
+
       const token = await getToken();
       if (!token) throw new Error('Not authenticated');
       const user = await verifyToken(token);
+
       const userId = user.user.id;
-      console.log("userID",userId);
-      // how to check if userId is in the data if it look like this:  data {"likes": ["4be333e5-751a-44de-9ebd-f618acee8a04"], "success": true}?
+      //console.log("userID",userId);
+      
       const isLiked2 = data.likes.includes(userId);
       if (isLiked2) {
         setIsLiked(true);
@@ -100,8 +99,7 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
     try {
       const data = await hitLike(tripId, type);
       if (!data.success) throw new Error(data.error || 'Failed to like trip');
-      
-      // Toggle like state and update count
+
       setIsLiked(!isLiked);
       setLikeCount(prevCount => isLiked ? prevCount - 1 : prevCount + 1);
     } catch (err: any) {
@@ -129,18 +127,13 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
   });
 
   const handleCommentSubmit = async () => {
-    if (comment.trim() === "") return; // Prevent empty comments
+    if (comment.trim() === "") return;
   
     try {
       const result = await addComment(trip.id, comment);
       if (result.success) {
-        // Update comment count
         setCommentCount(prevCount => prevCount + 1);
-        
-        // Toggle refresh trigger to cause comments to reload
         setRefreshComments(prev => !prev);
-        
-        // Reset input field
         setComment("");
         
         Alert.alert('Úspech', 'Komentár bol pridaný');
@@ -169,7 +162,7 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
       backgroundColor: theme.background,
       borderTopLeftRadius: 28,
       borderTopRightRadius: 28,
-      marginTop: -32, // overlays the map
+      marginTop: -32,
       paddingTop: 16,
       paddingBottom: 24,
       paddingHorizontal: 18,
@@ -327,6 +320,7 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
       <TouchableOpacity onPress={() => {router.back()}} style={{ marginRight: 10 }}>
           <Text style={{ fontSize: 24 }}>←</Text>
       </TouchableOpacity>
+
       {/* Map at the top */}
       <View style={styles.mapWrapper}>
         <MapView
@@ -341,13 +335,12 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
         >
           <Polyline
             coordinates={geoJsonToLatLngs(trip.route)}
-            strokeColor="#1976d2"
+            strokeColor="#d32f2f"
             strokeWidth={4}
           />
         </MapView>
       </View>
 
-      {/* Card overlays the map */}
       <View style={styles.cardOverlay}>
         <View style={styles.grabber} />
 
@@ -423,7 +416,7 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
               style={styles.footerItem} 
               onPress={() => {
                 handleLike(trip.id, "trip");
-                setIsLiked(!isLiked); // Toggle liked state
+                setIsLiked(!isLiked);
               }}
             >
               <Ionicons 

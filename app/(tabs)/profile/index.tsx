@@ -50,11 +50,11 @@ export default function ProfileScreen() {
       if (response.success && response.user) {
         setUserProfile(response.user);
       } else {
-        Alert.alert('Error', 'Failed to fetch profile data');
+        Alert.alert('Error', 'Chyba pri načítaní profilu. Skúste to znova neskôr.');
       }
     } catch (error) {
-      console.error('Profile fetch error:', error);
-      Alert.alert('Error', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Chyba:', error);
+      Alert.alert('Error', error instanceof Error ? error.message : 'Neznáma chyba');
     } finally {
       setLoading(false);
     }
@@ -67,24 +67,6 @@ export default function ProfileScreen() {
     } catch (error) {
       setActivityStreak(0);
     }
-  };
-
-  const handleLogout = async () => {
-    try {
-      const token = await getToken();
-      if (token) {
-        await apiRequest('/auth/logout', 'POST', undefined, token);
-      }
-      await removeToken();
-      router.replace('/(auth)/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-      Alert.alert('Logout failed', error instanceof Error ? error.message : 'Unknown error');
-    }
-  };
-
-  const handleEditProfile = () => {
-    router.push('/profile/edit');
   };
 
   const handleTabChange = (tabName: string) => {
@@ -128,8 +110,6 @@ export default function ProfileScreen() {
           <ProfileHeader 
             username={userProfile.username}
             photoUrl={userProfile.photo_url ? `${API_URL}${userProfile.photo_url}` : null}
-            onEditPress={handleEditProfile}
-            onLogoutPress={handleLogout}
             streak={activityStreak}
           />
           

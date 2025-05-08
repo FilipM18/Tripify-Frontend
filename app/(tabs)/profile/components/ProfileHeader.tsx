@@ -9,16 +9,12 @@ import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 interface ProfileHeaderProps {
   username: string;
   photoUrl: string | null;
-  onEditPress: () => void;
-  onLogoutPress: () => void;
   streak: number;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   username,
   photoUrl,
-  onEditPress,
-  onLogoutPress,
   streak,
 }) => {
   const { isDarkMode } = useTheme();
@@ -131,22 +127,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <Text style={styles.username}>{username}</Text>
         <Text style={styles.activeStreak}>{getStreakText(streak)}</Text>
 
-        <View style={styles.actions}>
-          <TouchableOpacity 
-            style={styles.editButton} 
-            onPress={onEditPress}
-          >
-            <Ionicons name="pencil-outline" size={isTablet ? 20 : 18} color="#FFF" />
-            <Text style={styles.editText}>Edit Profil</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.logoutButton} 
-            onPress={onLogoutPress}
-          >
-            <Ionicons name="log-out-outline" size={isTablet ? 20 : 18} color={theme.text} />
-          </TouchableOpacity>
-        </View>
       </View>
     </View>
   );

@@ -29,12 +29,12 @@ const CommentsSection = ({ tripId, refreshTrigger }: { tripId: string, refreshTr
       }
     };
     fetchData();
-  }, [tripId, refreshTrigger]); // Add refreshTrigger to dependency array
+  }, [tripId, refreshTrigger]);
   
 
   if (loading) return <ActivityIndicator />;
   if (error) return <Text style={{ color: 'red' }}>{error}</Text>;
-  if (!comments.length) return <Text>No comments yet.</Text>;
+  if (!comments.length) return <Text style={{color: theme.secondText}}>No comments yet.</Text>;
 
   const styles = StyleSheet.create({
     commentItem: { padding: 10, borderBottomWidth: 1, borderBottomColor:  theme.secondText},

@@ -7,16 +7,33 @@ import {
   Text, 
   TouchableOpacity,
   Switch,
-  ScrollView 
+  ScrollView, 
+  Alert
 } from 'react-native';
 import { useTheme } from '../../ThemeContext'; 
 import { lightTheme, darkTheme } from '../../theme'; 
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
+import { getToken, removeToken } from '@/utils/auth';
+import { apiRequest } from '@/utils/api';
 
 export default function SettingsScreen() {
   const { isDarkMode, toggleTheme } = useTheme();
   const theme = isDarkMode ? darkTheme : lightTheme;
   const { isTablet } = useScreenDimensions();
+
+  const handleLogout = async () => {
+    try {
+      const token = await getToken();
+      if (token) {
+        await apiRequest('/auth/logout', 'POST', undefined, token);
+      }
+      await removeToken();
+      router.replace('/(auth)/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Logout failed', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
 
   const styles = StyleSheet.create({
     container: {
@@ -97,7 +114,7 @@ export default function SettingsScreen() {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
           <Text style={styles.menuText}>Odhlásiť sa</Text>
           <View style={styles.spacer} />
           <Text style={styles.arrow}>›</Text>

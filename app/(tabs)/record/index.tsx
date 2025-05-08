@@ -20,7 +20,7 @@ export default function RecordTripScreen() {
       backgroundColor: theme.background
     },
     mapContainer: {
-      ...StyleSheet.absoluteFillObject, // This makes the map fill the entire screen
+      ...StyleSheet.absoluteFillObject, 
     },
   });
 
@@ -45,7 +45,7 @@ export default function RecordTripScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Map as background */}
+
       <View style={styles.mapContainer}>
         <RecordMap 
           route={route} 
@@ -53,35 +53,30 @@ export default function RecordTripScreen() {
           photos={photos}
         />
       </View>
-      
-      {/* Stats at the top */}
+
       <StatsDisplay 
         duration={duration}
         distance={totalDistance}
         pace={pace}
       />
-      
-      {/* Activity picker */}
+
       <ActivityPicker 
         selectedActivity={selectedActivity}
         onSelectActivity={setSelectedActivity}
         disabled={isRecording}
       />
-      
-      {/* Action button at bottom center */}
+
       <ActionButtons 
         isRecording={isRecording}
         onStart={startRecording}
         onStop={stopRecording}
       />
 
-      {/* Photo button at bottom right */}
       <PhotoButton 
         onPress={takePhoto}
         disabled={!isRecording}
       />
 
-      {/* Trip Save Modal */}
       <TripSaveModal
         visible={showSaveModal}
         onClose={cancelSaveModal}
