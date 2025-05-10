@@ -14,6 +14,7 @@ import { useTheme } from "@/app/ThemeContext";
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 import { AccessibleText } from '@/components/AccessibleText';
 import { useScaledStyles } from '@/utils/accessibilityUtils';
+import { Ionicons } from "@expo/vector-icons";
 
 type Trip = {
   id: number;
@@ -37,8 +38,13 @@ const TripsScreen = ({ token }: { token: string }) => {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { theme } = useTheme();
-  const { isTablet } = useScreenDimensions();
+  const { isTablet, width } = useScreenDimensions();
   const [trips, setTrips] = useState<Trip[]>([]);
+
+  // Calculate the ideal content width for tablets
+  const CONTENT_WIDTH = isTablet 
+    ? Math.min(600, width * 0.85)  // 85% of screen width up to 600px max
+    : width;                       // Full width on phones
 
   const handleDeleteTrip = (tripId: number) => {
     setTrips(prevTrips => prevTrips.filter(trip => trip.id !== tripId));
@@ -63,42 +69,75 @@ const TripsScreen = ({ token }: { token: string }) => {
     list: {
       padding: 10 * Math.sqrt(scale),
       backgroundColor: theme.background,
-      alignItems: isTablet ? "center" : "stretch",
+      alignItems: 'center', // Center the content in the FlatList
       width: '100%',
     },
     headerContainer: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 16 * Math.sqrt(scale),
-      paddingVertical: 12 * Math.sqrt(scale),
+      paddingHorizontal: isTablet ? 20 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
+      paddingVertical: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
       backgroundColor: theme.background,
-      maxWidth: isTablet ? 600 : '100%',
-      alignSelf: isTablet ? 'center' : undefined,
-      width: isTablet ? '80%' : '100%',
+      width: CONTENT_WIDTH,        // Use the calculated content width
+      maxWidth: '100%',            // Ensure it doesn't overflow
+      alignSelf: 'center',         // Center the header
+      marginTop: isTablet ? 12 * Math.sqrt(scale) : 0,
+      marginBottom: isTablet ? 8 * Math.sqrt(scale) : 0,
+      borderRadius: isTablet ? 16 * Math.sqrt(scale) : 0,
+      ...isTablet && {
+        shadowColor: theme.shadow,
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 2,
+      },
     },
     logoContainer: {
       flexDirection: 'row',
       alignItems: 'center',
     },
     logoIcon: {
-      width: 24 * Math.sqrt(scale),
-      height: 24 * Math.sqrt(scale),
+      width: isTablet ? 32 * Math.sqrt(scale) : 24 * Math.sqrt(scale),
+      height: isTablet ? 32 * Math.sqrt(scale) : 24 * Math.sqrt(scale),
       tintColor: theme.primary, 
     },
     logoText: {
-      fontSize: 24 * scale,
+      fontSize: isTablet ? 28 * scale : 24 * scale,
       fontWeight: 'bold',
-      marginLeft: 8 * Math.sqrt(scale),
+      marginLeft: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
       color: theme.text,
     },
     notificationButton: {
-      padding: 4 * Math.sqrt(scale),
+      padding: isTablet ? 8 * Math.sqrt(scale) : 4 * Math.sqrt(scale),
+      backgroundColor: isTablet ? theme.secondBackground : 'transparent',
+      borderRadius: isTablet ? 20 * Math.sqrt(scale) : 0,
+      ...isTablet && {
+        width: 40 * Math.sqrt(scale),
+        height: 40 * Math.sqrt(scale),
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
     },
     notificationIcon: {
-      width: 24 * Math.sqrt(scale),
-      height: 24 * Math.sqrt(scale),
+      width: isTablet ? 28 * Math.sqrt(scale) : 24 * Math.sqrt(scale),
+      height: isTablet ? 28 * Math.sqrt(scale) : 24 * Math.sqrt(scale),
       tintColor: theme.text,
+    },
+    emptyListContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: 100 * Math.sqrt(scale),
+      width: '100%',
+    },
+    emptyListText: {
+      fontSize: isTablet ? 18 * scale : 16 * scale,
+      color: theme.secondText,
+      textAlign: 'center',
+      marginTop: 20 * Math.sqrt(scale),
+    },
+    emptyListIcon: {
+      marginBottom: 16 * Math.sqrt(scale),
     },
   }));
 
@@ -132,6 +171,24 @@ const TripsScreen = ({ token }: { token: string }) => {
     };
     loadTrips();
   }, [token]);
+
+  const renderEmptyList = () => (
+    <View style={styles.emptyListContainer}>
+      <Ionicons 
+        name="map-outline" 
+        size={isTablet ? 80 : 60} 
+        color={theme.secondText} 
+        style={styles.emptyListIcon}
+      />
+      <AccessibleText 
+        variant="body" 
+        style={styles.emptyListText}
+        accessibilityLabel="Žiadne výlety na zobrazenie"
+      >
+        Žiadne výlety na zobrazenie
+      </AccessibleText>
+    </View>
+  );
 
   if (loading) {
     return (
@@ -200,17 +257,13 @@ const TripsScreen = ({ token }: { token: string }) => {
             onDeleteTrip={handleDeleteTrip}
           />
         )}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[
+          styles.list,
+          trips.length === 0 && { flex: 1 }
+        ]}
         accessibilityLabel="Zoznam výletov"
         showsVerticalScrollIndicator={true}
-        ListEmptyComponent={
-          <AccessibleText 
-            variant="body" 
-            style={styles.centeredText}
-          >
-            Žiadne výlety na zobrazenie
-          </AccessibleText>
-        }
+        ListEmptyComponent={renderEmptyList}
       />
     </View>
   );

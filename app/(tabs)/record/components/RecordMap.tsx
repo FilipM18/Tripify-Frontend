@@ -4,7 +4,10 @@ import MapView, { Polyline, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { PhotoUpload } from '../../../../hooks/useTrip';
 import { useTheme } from '@/app/ThemeContext';
 import { darkTheme } from '@/app/theme';
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
+import { useScaledStyles } from '@/utils/accessibilityUtils';
 
+//https://mapstyle.withgoogle.com/ - keby chceme inu :)
 const darkMapStyle = [
   {
     "elementType": "geometry",
@@ -200,8 +203,10 @@ interface RecordMapProps {
 
 export default function RecordMap({ route, currentLocation, photos }: RecordMapProps) {
   const { theme, visionMode } = useTheme();
+  const { isTablet } = useScreenDimensions();
   const isDarkMode = theme.background === darkTheme.background;
   
+  // Track and marker colors based on vision mode
   let trackColor = '#4CAF50'; 
   let markerColor = '#d32f2f';
   
@@ -224,35 +229,94 @@ export default function RecordMap({ route, currentLocation, photos }: RecordMapP
       break;
   }
 
-  const styles = StyleSheet.create({
+  // Line width should be thicker on tablets for better visibility
+  const lineWidth = isTablet ? 6 : 4;
+
+  // Calculate the appropriate zoom level based on route
+  const getInitialRegion = () => {
+    // If we have a current location, center on it
+    if (currentLocation) {
+      return {
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      };
+    }
+    
+    // If we have a route but no current location, calculate bounds to include all points
+    if (route.length > 0) {
+      // Find min/max coordinates
+      let minLat = route[0].latitude;
+      let maxLat = route[0].latitude;
+      let minLng = route[0].longitude;
+      let maxLng = route[0].longitude;
+      
+      route.forEach(point => {
+        minLat = Math.min(minLat, point.latitude);
+        maxLat = Math.max(maxLat, point.latitude);
+        minLng = Math.min(minLng, point.longitude);
+        maxLng = Math.max(maxLng, point.longitude);
+      });
+      
+      // Add padding
+      const latDelta = (maxLat - minLat) * 1.2 || 0.01;
+      const lngDelta = (maxLng - minLng) * 1.2 || 0.01;
+      
+      return {
+        latitude: (minLat + maxLat) / 2,
+        longitude: (minLng + maxLng) / 2,
+        latitudeDelta: Math.max(latDelta, 0.005), // Minimum zoom level
+        longitudeDelta: Math.max(lngDelta, 0.005),
+      };
+    }
+    
+    // Default region (Slovakia)
+    return {
+      latitude: 48.669,
+      longitude: 19.699,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    };
+  };
+
+  const styles = useScaledStyles((scale) => ({
+    container: {
+      flex: 1,
+      position: 'relative',
+    },
     map: {
       flex: 1,
+      width: '100%',
+      height: '100%',
     },
-  });
-
-  const lineWidth = 4;
+  }));
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <MapView
         style={styles.map}
         provider={PROVIDER_GOOGLE}
-        region={currentLocation ? {
-          latitude: currentLocation.latitude,
-          longitude: currentLocation.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        } : undefined}
+        initialRegion={getInitialRegion()}
         showsUserLocation
         followsUserLocation
         customMapStyle={isDarkMode ? darkMapStyle : []}
         accessibilityLabel="Mapa tvojej trasy"
+        showsCompass={true}
+        showsScale={isTablet}
+        zoomEnabled={true}
+        rotateEnabled={true}
+        scrollEnabled={true}
+        pitchEnabled={true}
+        moveOnMarkerPress={true}
       >
         {route.length > 0 && (
           <Polyline
             coordinates={route}
             strokeColor={trackColor}
             strokeWidth={lineWidth}
+            lineCap="round"
+            lineJoin="round"
           />
         )}
         
@@ -264,7 +328,9 @@ export default function RecordMap({ route, currentLocation, photos }: RecordMapP
               longitude: photo.longitude,
             }}
             title={`Fotka ${index + 1}`}
+            description={undefined} // Remove reference to photo.description since it doesn't exist in the type
             pinColor={markerColor}
+            tracksViewChanges={false} // Performance optimization
           />
         ))}
       </MapView>

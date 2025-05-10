@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Image, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { API_URL } from '@/utils/constants';
@@ -38,9 +38,18 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(Number(trip.likes_count));
   const [commentCount, setCommentCount] = useState(Number(trip.comments_count));
-  const { isTablet } = useScreenDimensions();
+  const { isTablet, width } = useScreenDimensions();
   const { theme, visionMode } = useTheme();
   const { subscribe } = useWebSocket();
+  
+  // Calculate card dimensions based on screen size
+  const CARD_WIDTH = isTablet 
+    ? Math.min(600, width * 0.8)  // 80% of screen width up to 600px max on tablets
+    : width * 0.95;               // 95% of screen width on phones
+  
+  // Other responsive dimensions
+  const MAP_HEIGHT = isTablet ? 220 : 180;
+  const PHOTO_SIZE = isTablet ? 200 : 140;
   
   useEffect(() => {
     const checkIfLiked = async () => {
@@ -95,15 +104,6 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
     }
   };
 
-  const getLike = async (tripId: number, type: string) => {
-    try {
-      const data = await getLikes(tripId, type);
-      if (!data.success) throw new Error(data.error || 'Nastala chyba');
-    } catch (err: any) {
-      console.error(err.message);
-    }
-  };
-  
   const handleDeleteTrip = async () => {
     try {
       const token = await getToken();
@@ -179,9 +179,9 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
     card: {
       backgroundColor: theme.card,
       borderRadius: isTablet ? 24 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
-      padding: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
+      padding: isTablet ? 20 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
       marginBottom: isTablet ? 24 * Math.sqrt(scale) : 20 * Math.sqrt(scale),
-      width: isTablet ? Math.min(600, 80) : '95%',
+      width: CARD_WIDTH,
       alignSelf: 'center',
       elevation: 3,
       shadowColor: theme.shadow,
@@ -195,9 +195,9 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
       marginBottom: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
     },
     avatar: {
-      width: isTablet ? 44 * Math.sqrt(scale) : 36 * Math.sqrt(scale),
-      height: isTablet ? 44 * Math.sqrt(scale) : 36 * Math.sqrt(scale),
-      borderRadius: isTablet ? 22 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
+      width: isTablet ? 48 * Math.sqrt(scale) : 36 * Math.sqrt(scale),
+      height: isTablet ? 48 * Math.sqrt(scale) : 36 * Math.sqrt(scale),
+      borderRadius: isTablet ? 24 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
       backgroundColor: theme.background,
     },
     headerText: {
@@ -230,20 +230,12 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
       flexShrink: 1,
       marginRight: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
     },
-    bold: {
-      fontWeight: 'bold',
-      color: theme.text,
-    },
     mediaScroll: {
       marginBottom: isTablet ? 14 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
-      minHeight: isTablet ? 220 : 180,
-      maxHeight: isTablet ? 220 : 180,
-    },
-    mediaScrollContent: {
-      alignItems: 'center',
+      height: MAP_HEIGHT,
     },
     mapContainer: {
-      height: isTablet ? 220 : 180,
+      height: MAP_HEIGHT,
       borderRadius: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
       overflow: 'hidden',
       backgroundColor: '#d0e6fa',
@@ -263,8 +255,8 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
       flexDirection: 'row',
     },
     photo: {
-      width: isTablet ? 280 * Math.sqrt(scale) : 200 * Math.sqrt(scale),
-      height: isTablet ? 280 * Math.sqrt(scale) : 200 * Math.sqrt(scale),
+      width: PHOTO_SIZE,
+      height: PHOTO_SIZE,
       borderRadius: isTablet ? 18 * Math.sqrt(scale) : 14 * Math.sqrt(scale),
       marginRight: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
       backgroundColor: theme.border,
@@ -286,6 +278,19 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
       fontSize: isTablet ? 16 * scale : 15 * scale,
       color: theme.text,
     },
+    tabletMediaContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    tabletMapContainer: {
+      width: hasPhotos ? '60%' : '100%',
+      height: MAP_HEIGHT,
+    },
+    tabletPhotoScroll: {
+      width: '38%',
+      height: MAP_HEIGHT,
+    },
   }));
 
   return (
@@ -297,7 +302,6 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
         accessibilityRole="button"
         accessibilityHint="Zobrazí detaily výletu"
       >
-
         <View style={styles.header}>
           <Image
             source={require('@/assets/avatar_placeholder.png')}
@@ -346,35 +350,79 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
         </View>
       </TouchableOpacity>
 
-      <View 
-        style={[styles.mapOnlyRow]}
-        accessibilityLabel="Mapa trasy"
-      >
-        <View style={[styles.mapContainer, { width: hasPhotos ? '75%' : '95%' }]}>
-          <MapView
-            style={styles.map}
-            provider={PROVIDER_DEFAULT}
-            initialRegion={{
-              latitude: geoJsonToLatLngs(trip.route)[0]?.latitude || 0,
-              longitude: geoJsonToLatLngs(trip.route)[0]?.longitude || 0,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            }}
-            scrollEnabled={false}
-            zoomEnabled={false}
-            pitchEnabled={false}
-            rotateEnabled={false}
-            pointerEvents="none"
+      {isTablet && hasPhotos ? (
+        <View style={styles.tabletMediaContainer}>
+          {/* Map */}
+          <View style={[styles.mapContainer, styles.tabletMapContainer]}>
+            <MapView
+              style={styles.map}
+              provider={PROVIDER_DEFAULT}
+              initialRegion={{
+                latitude: geoJsonToLatLngs(trip.route)[0]?.latitude || 0,
+                longitude: geoJsonToLatLngs(trip.route)[0]?.longitude || 0,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
+              scrollEnabled={false}
+              zoomEnabled={false}
+              pitchEnabled={false}
+              rotateEnabled={false}
+              pointerEvents="none"
+              accessibilityLabel="Mapa trasy výletu"
+            >
+              <Polyline
+                coordinates={geoJsonToLatLngs(trip.route)}
+                strokeColor="#d32f2f"
+                strokeWidth={4}
+              />
+            </MapView>
+          </View>
+          
+          {/* Photos */}
+          <ScrollView 
+            style={styles.tabletPhotoScroll}
+            accessibilityLabel={`Fotografie výletu, ${trip.photo_urls?.length} fotografií`}
           >
-            <Polyline
-              coordinates={geoJsonToLatLngs(trip.route)}
-              strokeColor="#d32f2f"
-              strokeWidth={4}
-            />
-          </MapView>
+            {(trip.photo_urls ?? []).map((url, idx) => (
+              <Image
+                key={idx}
+                source={{ uri: `${API_URL}${url}` }}
+                style={[styles.photo, { marginBottom: 10, width: '100%' }]}
+                accessibilityLabel={`Fotografia výletu ${idx + 1}`}
+              />
+            ))}
+          </ScrollView>
         </View>
-      </View>
+      ) : (
+        <View style={styles.mapOnlyRow}>
+          <View style={[styles.mapContainer, { width: hasPhotos ? '75%' : '95%' }]}>
+            <MapView
+              style={styles.map}
+              provider={PROVIDER_DEFAULT}
+              initialRegion={{
+                latitude: geoJsonToLatLngs(trip.route)[0]?.latitude || 0,
+                longitude: geoJsonToLatLngs(trip.route)[0]?.longitude || 0,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
+              scrollEnabled={false}
+              zoomEnabled={false}
+              pitchEnabled={false}
+              rotateEnabled={false}
+              pointerEvents="none"
+              accessibilityLabel="Mapa trasy výletu"
+            >
+              <Polyline
+                coordinates={geoJsonToLatLngs(trip.route)}
+                strokeColor="#d32f2f"
+                strokeWidth={4}
+              />
+            </MapView>
+          </View>
+        </View>
+      )}
 
+      {/* Footer: Likes, Comments, Share */}
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.footerItem} 
@@ -385,7 +433,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
         >
           <Ionicons 
             name={isLiked ? "heart" : "heart-outline"} 
-            size={22} 
+            size={isTablet ? 26 : 22} 
             color={isLiked ? theme.primary : theme.text} 
           />
           <AccessibleText variant="body">
@@ -400,7 +448,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
           accessibilityRole="button"
           accessibilityHint="Zobrazí komentáre k výletu"
         >
-          <Ionicons name="chatbubble-outline" size={22} color={theme.text} />
+          <Ionicons name="chatbubble-outline" size={isTablet ? 26 : 22} color={theme.text} />
           <AccessibleText variant="body">
             {commentCount}
           </AccessibleText>
@@ -411,7 +459,7 @@ const TripCard: React.FC<TripCardProps> = ({ trip, onPress, onDeleteTrip }) => {
           accessibilityLabel="Zdieľať výlet"
           accessibilityRole="button"
         >
-          <MaterialCommunityIcons name="share-outline" size={22} color={theme.text} />
+          <MaterialCommunityIcons name="share-outline" size={isTablet ? 26 : 22} color={theme.text} />
           <AccessibleText variant="body">
             Share
           </AccessibleText>
