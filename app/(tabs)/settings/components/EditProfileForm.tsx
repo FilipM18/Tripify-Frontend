@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { 
   View, 
-  Text, 
-  StyleSheet, 
   TextInput, 
   TouchableOpacity, 
   Image,
@@ -13,15 +11,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { API_URL } from '@/utils/constants';
 import { UserProfile } from '@/utils/types';
 import { useTheme } from '@/app/ThemeContext';
-import { lightTheme, darkTheme } from '@/app/theme';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
+import { AccessibleText } from '@/components/AccessibleText';
+import { useScaledStyles } from '@/utils/accessibilityUtils';
 
 interface EditProfileFormProps {
   userProfile: UserProfile;
   onCancel: () => void;
   onSubmit: (formData: FormData) => void;
   isSubmitting: boolean;
-  
 }
 
 const EditProfileForm: React.FC<EditProfileFormProps> = ({
@@ -37,8 +35,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
     userProfile.photo_url ? `${API_URL}${userProfile.photo_url}` : null
   );
   const [imageFile, setImageFile] = useState<string | null>(null);
-  const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useTheme();
   const { isTablet } = useScreenDimensions();
 
   const pickImage = async () => {
@@ -106,35 +103,32 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
         type,
       } as any);
     }
-    console.log('Form data:', formData);
     onSubmit(formData);
   };
-  
-  
-  
 
-  const styles = StyleSheet.create({
+  const styles = useScaledStyles((scale) => ({
     container: {
-      padding: isTablet ? 24 : 16,
+      padding: isTablet ? 24 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
       backgroundColor: theme.secondBackground,
+      borderRadius: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
     },
     imageSection: {
       alignItems: 'center',
-      marginBottom: isTablet ? 32 : 24,
+      marginBottom: isTablet ? 32 * Math.sqrt(scale) : 24 * Math.sqrt(scale),
     },
     imageContainer: {
       position: 'relative', 
-      marginBottom: isTablet ? 12 : 8,
+      marginBottom: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
     },
     profileImage: {
-      width: isTablet ? 160 : 120,
-      height: isTablet ? 160 : 120,
-      borderRadius: isTablet ? 80 : 60,
+      width: isTablet ? 160 * Math.sqrt(scale) : 120 * Math.sqrt(scale),
+      height: isTablet ? 160 * Math.sqrt(scale) : 120 * Math.sqrt(scale),
+      borderRadius: isTablet ? 80 * Math.sqrt(scale) : 60 * Math.sqrt(scale),
     },
     placeholderImage: {
-      width: isTablet ? 160 : 120,
-      height: isTablet ? 160 : 120,
-      borderRadius: isTablet ? 80 : 60,
+      width: isTablet ? 160 * Math.sqrt(scale) : 120 * Math.sqrt(scale),
+      height: isTablet ? 160 * Math.sqrt(scale) : 120 * Math.sqrt(scale),
+      borderRadius: isTablet ? 80 * Math.sqrt(scale) : 60 * Math.sqrt(scale),
       backgroundColor: theme.background,
       justifyContent: 'center',
       alignItems: 'center',
@@ -144,100 +138,152 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
       bottom: 0,
       right: 0,
       backgroundColor: theme.primary,
-      borderRadius: isTablet ? 20 : 15,
-      width: isTablet ? 40 : 30,
-      height: isTablet ? 40 : 30,
+      borderRadius: isTablet ? 20 * Math.sqrt(scale) : 15 * Math.sqrt(scale),
+      width: isTablet ? 40 * Math.sqrt(scale) : 30 * Math.sqrt(scale),
+      height: isTablet ? 40 * Math.sqrt(scale) : 30 * Math.sqrt(scale),
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 2,
       borderColor: theme.border,
     },
     formSection: {
-      marginBottom: isTablet ? 32 : 24,
+      marginBottom: isTablet ? 32 * Math.sqrt(scale) : 24 * Math.sqrt(scale),
     },
     inputGroup: {
-      marginBottom: isTablet ? 24 : 16,
+      marginBottom: isTablet ? 24 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
     },
     label: {
-      fontSize: isTablet ? 16 : 14,
+      fontSize: isTablet ? 16 * scale : 14 * scale,
       fontWeight: '500',
-      marginBottom: isTablet ? 8 : 6,
+      marginBottom: isTablet ? 8 * Math.sqrt(scale) : 6 * Math.sqrt(scale),
       color: theme.text,
     },
     input: {
       borderWidth: 1,
       borderColor: theme.border,
-      borderRadius: 8,
-      paddingHorizontal: isTablet ? 16 : 12,
-      paddingVertical: isTablet ? 14 : 10,
-      fontSize: isTablet ? 18 : 16,
-      color: theme.secondText,
+      borderRadius: isTablet ? 10 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
+      paddingHorizontal: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
+      paddingVertical: isTablet ? 14 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
+      fontSize: isTablet ? 18 * scale : 16 * scale,
+      color: theme.text,
     },
     passwordButton: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingVertical: isTablet ? 16 : 12,
+      paddingVertical: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
     },
     passwordButtonText: {
-      fontSize: isTablet ? 18 : 16,
+      fontSize: isTablet ? 18 * scale : 16 * scale,
       color: theme.primary,
       fontWeight: '500',
     },
+    buttonRow: { 
+      flexDirection: 'row', 
+      justifyContent: 'space-between',
+      marginTop: isTablet ? 8 * Math.sqrt(scale) : 4 * Math.sqrt(scale),
+    },
+    cancelButton: { 
+      backgroundColor: theme.secondBackground, 
+      borderRadius: isTablet ? 10 * Math.sqrt(scale) : 8 * Math.sqrt(scale), 
+      paddingVertical: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale), 
+      paddingHorizontal: isTablet ? 20 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
+      borderWidth: 1,
+      borderColor: theme.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: isTablet ? 120 * Math.sqrt(scale) : 100 * Math.sqrt(scale),
+    },
     submitButton: {
       backgroundColor: theme.primary,
-      borderRadius: isTablet ? 12 : 8,
-      paddingVertical: isTablet ? 18 : 14,
-      paddingHorizontal: isTablet ? 24 : 16,
+      borderRadius: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
+      paddingVertical: isTablet ? 18 * Math.sqrt(scale) : 14 * Math.sqrt(scale),
+      paddingHorizontal: isTablet ? 24 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
       alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: isTablet ? 140 * Math.sqrt(scale) : 120 * Math.sqrt(scale),
     },
     disabledButton: {
-      backgroundColor: '#A5D6A7',
+      opacity: 0.7,
     },
-    submitButtonText: {
-      color: theme.text,
-      fontSize: isTablet ? 18 : 16,
-      fontWeight: '600',
+    cancelText: { 
+      color: theme.text, 
+      fontWeight: '500', 
+      fontSize: isTablet ? 16 * scale : 14 * scale,
     },
-    buttonRow: { flexDirection: 'row', justifyContent: 'space-between' },
-    cancelButton: { backgroundColor: theme.secondBackground, borderRadius: 8, paddingVertical: isTablet ? 16 : 12, paddingHorizontal: 16 },
-    cancelText: { color: theme.text, fontWeight: '500', fontSize: isTablet ? 16 : 12 },
-    submitText: { color: '#fff', fontWeight: '600', fontSize: isTablet ? 16 : 14 },
-  });
+    submitText: { 
+      color: '#fff', 
+      fontWeight: '600', 
+      fontSize: isTablet ? 16 * scale : 14 * scale,
+    },
+  }));
 
   return (
-    <View style={styles.container}>
-      <View style={styles.imageSection}>
-        <TouchableOpacity onPress={pickImage} style={styles.imageContainer}>
+    <View 
+      style={styles.container}
+      accessibilityLabel="Úprava profilu formulár"
+    >
+      <View 
+        style={styles.imageSection}
+        accessibilityLabel="Sekcia pre úpravu profilovej fotografie"
+      >
+        <TouchableOpacity 
+          onPress={pickImage} 
+          style={styles.imageContainer}
+          accessibilityLabel="Zmeniť profilovú fotografiu"
+          accessibilityRole="button"
+          accessibilityHint="Stlačením vyberiete novú profilovú fotografiu z galérie"
+        >
           {profileImage ? (
-            <Image source={{ uri: profileImage }} style={styles.profileImage} />
+            <Image 
+              source={{ uri: profileImage }} 
+              style={styles.profileImage}
+              accessibilityLabel="Profilová fotografia"
+            />
           ) : (
             <View style={styles.placeholderImage}>
-              <Ionicons name="person" size={isTablet ? 60 : 40} color={theme.secondText} />
+              <Ionicons 
+                name="person" 
+                size={isTablet ? 60 : 40} 
+                color={theme.secondText}
+              />
             </View>
           )}
           <View style={styles.editImageButton}>
-            <Ionicons name="camera" size={isTablet ? 24 : 18} color={theme.card} />
+            <Ionicons 
+              name="camera" 
+              size={isTablet ? 24 : 18} 
+              color={theme.card}
+            />
           </View>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.formSection}>
+      <View 
+        style={styles.formSection}
+        accessibilityLabel="Formulár pre úpravu osobných údajov"
+      >
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Username</Text>
+          <AccessibleText variant="bodyBold" style={styles.label}>
+            Username
+          </AccessibleText>
           <TextInput
             style={styles.input}
             value={username}
             onChangeText={setUsername}
             placeholder="Zadaj username"
             placeholderTextColor={theme.secondText}
+            accessibilityLabel="Pole pre užívateľské meno"
+            accessibilityHint="Zadajte vaše nové užívateľské meno"
           />
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
+          <AccessibleText variant="bodyBold" style={styles.label}>
+            Email
+          </AccessibleText>
           <TextInput
             style={styles.input}
             value={email}
@@ -246,11 +292,15 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
             placeholderTextColor={theme.secondText}
             keyboardType="email-address"
             autoCapitalize="none"
+            accessibilityLabel="Pole pre email"
+            accessibilityHint="Zadajte vašu emailovú adresu"
           />
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Tel. číslo</Text>
+          <AccessibleText variant="bodyBold" style={styles.label}>
+            Tel. číslo
+          </AccessibleText>
           <TextInput
             style={styles.input}
             value={phoneNumber}
@@ -259,19 +309,47 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
             placeholderTextColor={theme.secondText}
             keyboardType="phone-pad"
             maxLength={10}
+            accessibilityLabel="Pole pre telefónne číslo (voliteľné)"
+            accessibilityHint="Zadajte vaše telefónne číslo bez medzinárodnej predvoľby"
           />
         </View>
       </View>
 
       <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.cancelButton} onPress={onCancel} disabled={isSubmitting}>
-          <Text style={styles.cancelText}>Zrušiť</Text>
+        <TouchableOpacity 
+          style={[styles.cancelButton, isSubmitting && styles.disabledButton]} 
+          onPress={onCancel} 
+          disabled={isSubmitting}
+          accessibilityLabel="Zrušiť úpravy"
+          accessibilityRole="button"
+          accessibilityState={{ disabled: isSubmitting }}
+        >
+          <AccessibleText variant="body" style={styles.cancelText}>
+            Zrušiť
+          </AccessibleText>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Ulož zmeny</Text>}
+        
+        <TouchableOpacity 
+          style={[styles.submitButton, isSubmitting && styles.disabledButton]} 
+          onPress={handleSubmit} 
+          disabled={isSubmitting}
+          accessibilityLabel="Uložiť zmeny profilu"
+          accessibilityRole="button"
+          accessibilityState={{ disabled: isSubmitting }}
+          accessibilityHint="Potvrdí a uloží zmeny profilu"
+        >
+          {isSubmitting ? (
+            <ActivityIndicator 
+              color="#fff" 
+              accessibilityLabel="Prebieha ukladanie zmien" 
+            />
+          ) : (
+            <AccessibleText variant="bodyBold" style={styles.submitText}>
+              Ulož zmeny
+            </AccessibleText>
+          )}
         </TouchableOpacity>
       </View>
-
     </View>
   );
 };

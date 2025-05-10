@@ -3,8 +3,6 @@ import {
   View,
   FlatList,
   ActivityIndicator,
-  Text,
-  StyleSheet,
   Image,
   TouchableOpacity,
 } from "react-native";
@@ -12,9 +10,10 @@ import { fetchAllTrips } from "@/utils/api";
 import TripCard from "@/app/(tabs)/home/components/TripCard";
 import { getToken } from "@/utils/auth";
 import { useRouter } from "expo-router";
-import { useTheme } from "../../ThemeContext"; 
-import { lightTheme, darkTheme } from "../../theme"; 
+import { useTheme } from "@/app/ThemeContext";
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
+import { AccessibleText } from '@/components/AccessibleText';
+import { useScaledStyles } from '@/utils/accessibilityUtils';
 
 type Trip = {
   id: number;
@@ -33,30 +32,36 @@ type Trip = {
   };
 };
 
-
 const TripsScreen = ({ token }: { token: string }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useTheme();
   const { isTablet } = useScreenDimensions();
   const [trips, setTrips] = useState<Trip[]>([]);
 
   const handleDeleteTrip = (tripId: number) => {
     setTrips(prevTrips => prevTrips.filter(trip => trip.id !== tripId));
   };
-  
 
-  const styles = StyleSheet.create({
+  const styles = useScaledStyles((scale) => ({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
     centered: {
       flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    centeredText: {
       textAlign: "center",
-      marginTop: 40,
+      marginTop: 40 * Math.sqrt(scale),
       color: theme.text,
+      fontSize: 16 * scale,
     },
     list: {
-      padding: 10,
+      padding: 10 * Math.sqrt(scale),
       backgroundColor: theme.background,
       alignItems: isTablet ? "center" : "stretch",
       width: '100%',
@@ -65,8 +70,8 @@ const TripsScreen = ({ token }: { token: string }) => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingHorizontal: 16 * Math.sqrt(scale),
+      paddingVertical: 12 * Math.sqrt(scale),
       backgroundColor: theme.background,
       maxWidth: isTablet ? 600 : '100%',
       alignSelf: isTablet ? 'center' : undefined,
@@ -77,25 +82,25 @@ const TripsScreen = ({ token }: { token: string }) => {
       alignItems: 'center',
     },
     logoIcon: {
-      width: 24,
-      height: 24,
-      tintColor: '#4CAF50', 
+      width: 24 * Math.sqrt(scale),
+      height: 24 * Math.sqrt(scale),
+      tintColor: theme.primary, 
     },
     logoText: {
-      fontSize: 24,
+      fontSize: 24 * scale,
       fontWeight: 'bold',
-      marginLeft: 8,
+      marginLeft: 8 * Math.sqrt(scale),
       color: theme.text,
     },
     notificationButton: {
-      padding: 4,
+      padding: 4 * Math.sqrt(scale),
     },
     notificationIcon: {
-      width: 24,
-      height: 24,
+      width: 24 * Math.sqrt(scale),
+      height: 24 * Math.sqrt(scale),
       tintColor: theme.text,
     },
-  });
+  }));
 
   useEffect(() => {
     const loadTrips = async () => {
@@ -128,23 +133,54 @@ const TripsScreen = ({ token }: { token: string }) => {
     loadTrips();
   }, [token]);
 
-  if (loading)
-    return <ActivityIndicator size="large" style={styles.centered} />;
-  if (error) return <Text style={styles.centered}>{error}</Text>;
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator 
+          size="large" 
+          color={theme.primary}
+          accessibilityLabel="Načítavanie výletov"
+        />
+      </View>
+    );
+  }
+  
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <AccessibleText 
+          variant="body" 
+          style={styles.centeredText}
+          accessibilityLabel={`Chyba: ${error}`}
+        >
+          {error}
+        </AccessibleText>
+      </View>
+    );
+  }
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background }}>
+    <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <View style={styles.logoContainer}>
+        <View 
+          style={styles.logoContainer}
+          accessibilityLabel="Tripify logo"
+        >
           <Image 
             source={require('@/assets/images/logo.png')}
             style={styles.logoIcon}
             resizeMode="contain"
+            accessibilityLabel="Tripify logo ikona"
           />
-          <Text style={styles.logoText}>Tripify</Text>
+          <AccessibleText variant="header1" style={styles.logoText}>
+            Tripify
+          </AccessibleText>
         </View>
         <TouchableOpacity 
           style={styles.notificationButton}
+          accessibilityLabel="Notifikácie"
+          accessibilityRole="button"
+          accessibilityHint="Zobrazí notifikácie"
         >
           <Image 
             source={require('@/assets/images/bell.png')}
@@ -165,10 +201,19 @@ const TripsScreen = ({ token }: { token: string }) => {
           />
         )}
         contentContainerStyle={styles.list}
+        accessibilityLabel="Zoznam výletov"
+        showsVerticalScrollIndicator={true}
+        ListEmptyComponent={
+          <AccessibleText 
+            variant="body" 
+            style={styles.centeredText}
+          >
+            Žiadne výlety na zobrazenie
+          </AccessibleText>
+        }
       />
     </View>
   );
-  
 };
 
 export default TripsScreen;

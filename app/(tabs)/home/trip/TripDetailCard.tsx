@@ -1,11 +1,8 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
-  Text,
   Image,
-  StyleSheet,
   ScrollView,
-  Dimensions,
   TouchableOpacity,
   TextInput,
   Alert,
@@ -18,10 +15,10 @@ import { getToken } from "@/utils/auth";
 import { addComment, getLikes, hitLike, verifyToken } from "@/utils/api";
 import { router } from "expo-router";
 import { useTheme } from '@/app/ThemeContext';
-import { lightTheme, darkTheme } from '@/app/theme';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 import { useWebSocket } from "@/utils/WebSocketContext";
-
+import { AccessibleText } from '@/components/AccessibleText';
+import { useScaledStyles } from '@/utils/accessibilityUtils';
 
 function geoJsonToLatLngs(route: { coordinates: [any, any][] }) {
   return route.coordinates.map(([lng, lat]) => ({
@@ -50,8 +47,7 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
   const [comment, setComment] = useState("");
   const [commentCount, setCommentCount] = useState(Number(trip.comments_count));
   const [refreshComments, setRefreshComments] = useState(false);
-  const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme, visionMode, fontScale } = useTheme();
   const { isTablet, width } = useScreenDimensions();
   const { subscribe } = useWebSocket();
   
@@ -59,29 +55,24 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
   const contentWidth = isTablet ? Math.min(700, width * 0.85) : width;
 
   useEffect(() => {
-
     const checkIfLiked = async () => {
-      const data = await getLikes(trip.id, "trip");
-      //console.log("data",data);
-      if (!data.success) throw new Error(data.error || 'Failed to fetch likes');
+      try {
+        const data = await getLikes(trip.id, "trip");
+        if (!data.success) throw new Error(data.error || 'Failed to fetch likes');
 
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-      const user = await verifyToken(token);
+        const token = await getToken();
+        if (!token) throw new Error('Not authenticated');
+        const user = await verifyToken(token);
 
-      const userId = user.user.id;
-      //console.log("userID",userId);
-      
-      const isLiked2 = data.likes.includes(userId);
-      if (isLiked2) {
-        setIsLiked(true);
+        const userId = user.user.id;
+        
+        const isLiked2 = data.likes.includes(userId);
+        setIsLiked(isLiked2);
+      } catch (error) {
+        console.error('Error checking if trip is liked:', error);
       }
-      else {
-        setIsLiked(false);
-      }
-      console.log("isLiked",isLiked2);
-      //setIsLiked(isLiked);
-    }
+    };
+    
     checkIfLiked();
 
     const unsubscribe = subscribe('like-update', async (data) => {
@@ -92,7 +83,6 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
           setLikeCount(prev => Math.max(0, prev - 1));
         }
         
-
         const token = await getToken();
         if (token) {
           const user = await verifyToken(token);
@@ -118,6 +108,7 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
   }, [trip.id, subscribe]);
 
   const hasPhotos = trip.photo_urls && trip.photo_urls.length > 0;
+  
   const formatDuration = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -139,25 +130,6 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
       console.error(err.message);
     }
   };
-  
-
-  const getLike = async (tripId: number, type: string) => {
-    try {
-      
-      const data = await getLikes(tripId, type);
-      if (!data.success) throw new Error(data.error || 'Failed to fetch likes');
-    }
-    catch (err: any) {
-      console.error(err.message);
-    }
-  };
-
-  const date = new Date(trip.ended_at);
-  const formatted = date.toLocaleDateString("sk-SK", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
 
   const handleCommentSubmit = async () => {
     if (comment.trim() === "") return;
@@ -177,12 +149,37 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
     }
   };
 
-  const styles = StyleSheet.create({
+  const date = new Date(trip.ended_at);
+  const formatted = date.toLocaleDateString("sk-SK", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const getTripAccessibilityLabel = () => {
+    const desc = trip.description ? `, popis: ${trip.description}` : '';
+    return `Výlet od užívateľa ${trip.username}, vzdialenosť ${formatNum(trip.distance_km)} kilometrov, 
+    trvanie ${formatDuration(trip.duration_seconds)}, vytvorený ${formatted}${desc}`;
+  };
+
+  const styles = useScaledStyles((scale) => ({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    backButton: {
+      padding: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
+      marginLeft: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
+    },
+    backIcon: {
+      fontSize: isTablet ? 28 * scale : 24 * scale,
+      color: theme.text,
+    },
     mapWrapper: {
       width: width,
       height: MAP_HEIGHT,
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
+      borderTopLeftRadius: isTablet ? 32 * Math.sqrt(scale) : 24 * Math.sqrt(scale),
+      borderTopRightRadius: isTablet ? 32 * Math.sqrt(scale) : 24 * Math.sqrt(scale),
       overflow: "hidden",
       backgroundColor: "#d0e6fa",
     },
@@ -192,169 +189,148 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
     },
     cardOverlay: {
       backgroundColor: theme.background,
-      borderTopLeftRadius: 28,
-      borderTopRightRadius: 28,
-      marginTop: -32,
-      paddingTop: 16,
-      paddingBottom: 24,
-      paddingHorizontal: 18,
+      borderTopLeftRadius: isTablet ? 36 * Math.sqrt(scale) : 28 * Math.sqrt(scale),
+      borderTopRightRadius: isTablet ? 36 * Math.sqrt(scale) : 28 * Math.sqrt(scale),
+      marginTop: isTablet ? -40 * Math.sqrt(scale) : -32 * Math.sqrt(scale),
+      paddingTop: isTablet ? 24 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
+      paddingBottom: isTablet ? 32 * Math.sqrt(scale) : 24 * Math.sqrt(scale),
+      paddingHorizontal: isTablet ? 24 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
       elevation: 8,
       shadowColor: theme.shadow,
       shadowOpacity: 0.12,
       shadowRadius: 14,
       shadowOffset: { width: 0, height: 5 },
-      minHeight: 340,
+      minHeight: isTablet ? 400 : 340,
       maxWidth: isTablet ? contentWidth : '100%',
       alignSelf: isTablet ? 'center' : undefined,
       width: isTablet ? contentWidth : '100%',
     },
     grabber: {
       alignSelf: "center",
-      width: 48,
-      height: 5,
-      borderRadius: 3,
+      width: isTablet ? 60 * Math.sqrt(scale) : 48 * Math.sqrt(scale),
+      height: isTablet ? 6 * Math.sqrt(scale) : 5 * Math.sqrt(scale),
+      borderRadius: isTablet ? 4 * Math.sqrt(scale) : 3 * Math.sqrt(scale),
       backgroundColor: theme.secondBackground,
-      marginBottom: 12,
+      marginBottom: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
     },
     header: {
       flexDirection: "row",
       alignItems: "center",
-      marginBottom: 8,
+      marginBottom: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
     },
     avatar: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: "#fff",
-      marginRight: 10,
+      width: isTablet ? 56 * Math.sqrt(scale) : 44 * Math.sqrt(scale),
+      height: isTablet ? 56 * Math.sqrt(scale) : 44 * Math.sqrt(scale),
+      borderRadius: isTablet ? 28 * Math.sqrt(scale) : 22 * Math.sqrt(scale),
+      backgroundColor: theme.background,
+      marginRight: isTablet ? 14 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
     },
     headerText: {
       flex: 1,
       minWidth: 0,
     },
-    username: {
-      fontWeight: "bold",
-      fontSize: 16,
-      color: theme.text,
-      flexShrink: 1,
-    },
-    date: {
-      fontSize: 12,
-      color: theme.thirdText,
-      flexShrink: 1,
-    },
     menuButton: {
-      padding: 4,
-    },
-    mainText: {
-      fontSize: 15,
-      color: theme.text,
-      marginBottom: 10,
-      marginLeft: 2,
-      marginRight: 2,
+      padding: isTablet ? 6 * Math.sqrt(scale) : 4 * Math.sqrt(scale),
     },
     mediaScroll: {
-      marginBottom: 10,
-      minHeight: 160,
-      maxHeight: 160,
+      marginBottom: isTablet ? 14 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
+      minHeight: isTablet ? 200 : 160,
+      maxHeight: isTablet ? 200 : 160,
     },
     photo: {
-      width: 140,
-      height: 140,
-      borderRadius: 14,
-      marginRight: 12,
+      width: isTablet ? 180 * Math.sqrt(scale) : 140 * Math.sqrt(scale),
+      height: isTablet ? 180 * Math.sqrt(scale) : 140 * Math.sqrt(scale),
+      borderRadius: isTablet ? 18 * Math.sqrt(scale) : 14 * Math.sqrt(scale),
+      marginRight: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
       backgroundColor: theme.border,
     },
     statsBox: {
       flexDirection: "row",
       justifyContent: "space-between",
       backgroundColor: theme.statBackground,
-      borderRadius: 12,
-      padding: 12,
-      marginBottom: 10,
-      marginTop: 2,
+      borderRadius: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
+      padding: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
+      marginBottom: isTablet ? 14 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
+      marginTop: isTablet ? 4 * Math.sqrt(scale) : 2 * Math.sqrt(scale),
     },
     statItem: {
       alignItems: "center",
       flex: 1,
     },
-    statLabel: {
-      fontSize: 13,
-      color: theme.thirdText,
-      marginBottom: 2,
-    },
-    statValue: {
-      fontSize: 15,
-      fontWeight: "bold",
-      color: theme.text,
-    },
     footer: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      marginTop: 8,
-      paddingHorizontal: 6,
+      marginTop: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
+      paddingHorizontal: isTablet ? 8 * Math.sqrt(scale) : 6 * Math.sqrt(scale),
     },
     footerItem: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 4,
-    },
-    footerText: {
-      marginLeft: 4,
-      fontSize: 15,
-      color: theme.text,
+      gap: isTablet ? 6 * Math.sqrt(scale) : 4 * Math.sqrt(scale),
     },
     commentsSection: {
-      marginTop: 18,
-      padding: 10,
+      marginTop: isTablet ? 24 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
+      padding: isTablet ? 14 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
       backgroundColor: theme.statBackground,
-      borderRadius: 12,
+      borderRadius: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
       elevation: 2,
       shadowColor: theme.shadow,
       shadowOpacity: 0.05,
       shadowRadius: 6,
       shadowOffset: { width: 0, height: 2 },
     },
-    commentsTitle: {
-      fontWeight: "bold",
-      fontSize: 16,
-      color: theme.text,
-      marginBottom: 6,
-    },
     commentsInput: {
       flexDirection: "row",
       alignItems: "center",
-      marginTop: 10,
-      padding: 8,
+      marginTop: isTablet ? 14 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
+      padding: isTablet ? 10 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
       backgroundColor: theme.card,
-      borderRadius: 8,
+      borderRadius: isTablet ? 10 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
       borderWidth: 1,
       borderColor: theme.border,
     },
     input: {
       flex: 1,
-      padding: 8,
-      fontSize: 14,
+      padding: isTablet ? 10 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
+      fontSize: isTablet ? 16 * scale : 14 * scale,
       color: theme.text,
     },
     sendButton: {
-      padding: 8,
+      padding: isTablet ? 10 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
       backgroundColor: theme.primary,
-      borderRadius: 8,
+      borderRadius: isTablet ? 10 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
       alignItems: "center",
       justifyContent: "center",
     },
-  });
+    sendButtonText: {
+      color: 'white',
+      fontWeight: 'bold',
+    },
+    descriptionText: {
+      marginVertical: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
+    },
+    commentsTitleText: {
+      marginBottom: isTablet ? 10 * Math.sqrt(scale) : 6 * Math.sqrt(scale),
+    }
+  }));
 
   return (
-    <View>
-      <TouchableOpacity onPress={() => {router.back()}} style={{ marginRight: 10 }}>
-          <Text style={{ fontSize: 24 }}>←</Text>
+    <View style={styles.container}>
+      <TouchableOpacity 
+        onPress={() => {router.back()}} 
+        style={styles.backButton}
+        accessibilityLabel="Späť"
+        accessibilityRole="button"
+        accessibilityHint="Návrat na predchádzajúcu obrazovku"
+      >
+        <Ionicons name="arrow-back" size={24} color={theme.text} />
       </TouchableOpacity>
 
-      {/* Map at the top */}
-      <View style={styles.mapWrapper}>
+      <View 
+        style={styles.mapWrapper}
+        accessibilityLabel="Mapa výletu"
+      >
         <MapView
           style={styles.map}
           provider={PROVIDER_DEFAULT}
@@ -376,129 +352,158 @@ const TripDetailCard = ({ trip }: { trip: Trip }) => {
       <View style={styles.cardOverlay}>
         <View style={styles.grabber} />
 
-        {/* Header */}
-        <View style={styles.header}>
+        <View 
+          style={styles.header}
+          accessibilityLabel={`Výlet od užívateľa ${trip.username}, ${formatted}`}
+        >
           <Image
             source={require("@/assets/avatar_placeholder.png")}
             style={styles.avatar}
+            accessibilityLabel={`Profilový obrázok užívateľa ${trip.username}`}
           />
           <View style={styles.headerText}>
-            <Text style={styles.username}>{trip.username}</Text>
-            <Text style={styles.date}>{formatted}</Text>
+            <AccessibleText variant="bodyBold">
+              {trip.username}
+            </AccessibleText>
+            <AccessibleText variant="caption">
+              {formatted}
+            </AccessibleText>
           </View>
-          <TouchableOpacity style={styles.menuButton}>
+          <TouchableOpacity 
+            style={styles.menuButton}
+            accessibilityLabel="Možnosti výletu"
+            accessibilityRole="button"
+          >
             <Ionicons name="ellipsis-vertical" size={20} color={theme.text} />
           </TouchableOpacity>
         </View>
 
-        {/* Main Post Text */}
-        <Text style={styles.mainText}>
+        <AccessibleText variant="body" style={styles.descriptionText}>
           {trip.description || "Popis výletu..."}
-        </Text>
+        </AccessibleText>
 
-        {/* Photos */}
         {hasPhotos && (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.mediaScroll}
+            accessibilityLabel={`Fotografie výletu, ${trip.photo_urls?.length || 0} fotografií`}
           >
             {(trip.photo_urls ?? []).map((url, idx) => (
               <Image
                 key={idx}
                 source={{ uri: `${API_URL}${url}` }}
                 style={styles.photo}
+                accessibilityLabel={`Fotografia výletu ${idx + 1}`}
               />
             ))}
           </ScrollView>
         )}
 
-        {/* Stats */}
-        <View style={styles.statsBox}>
+        <View 
+          style={styles.statsBox}
+          accessibilityLabel={`Štatistiky výletu: Štart ${trip.started_at?.slice(11, 16) ?? "--:--"}, Koniec ${trip.ended_at?.slice(11, 16) ?? "--:--"}, Vzdialenosť ${formatNum(trip.distance_km)} kilometrov, Trvanie ${formatDuration(trip.duration_seconds)}`}
+        >
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Štart</Text>
-            <Text style={styles.statValue}>
+            <AccessibleText variant="caption">Štart</AccessibleText>
+            <AccessibleText variant="bodyBold">
               {trip.started_at?.slice(11, 16) ?? "--:--"}
-            </Text>
+            </AccessibleText>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Koniec</Text>
-            <Text style={styles.statValue}>
+            <AccessibleText variant="caption">Koniec</AccessibleText>
+            <AccessibleText variant="bodyBold">
               {trip.ended_at?.slice(11, 16) ?? "--:--"}
-            </Text>
+            </AccessibleText>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Vzdialenosť</Text>
-            <Text style={styles.statValue}>
+            <AccessibleText variant="caption">Vzdialenosť</AccessibleText>
+            <AccessibleText variant="bodyBold">
               {formatNum(trip.distance_km)} km
-            </Text>
+            </AccessibleText>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Trvanie</Text>
-            <Text style={styles.statValue}>
+            <AccessibleText variant="caption">Trvanie</AccessibleText>
+            <AccessibleText variant="bodyBold">
               {formatDuration(trip.duration_seconds)}
-            </Text>
+            </AccessibleText>
           </View>
         </View>
 
-        {/* Footer */}
         <View style={styles.footer}>
-          <View style={styles.footerItem}>
-            <TouchableOpacity 
-              style={styles.footerItem} 
-              onPress={() => {
-                handleLike(trip.id, "trip");
-                setIsLiked(!isLiked);
-              }}
-            >
-              <Ionicons 
-                name={isLiked ? "heart" : "heart-outline"} 
-                size={22} 
-                color={isLiked ? theme.primary : theme.text} 
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.footerItem} onPress={() => {getLike(trip.id, "trip")}}>
-              <Text style={styles.footerText}>{likeCount}</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+            style={styles.footerItem} 
+            onPress={() => handleLike(trip.id, "trip")}
+            accessibilityLabel={`${isLiked ? 'Už sa vám páči' : 'Páči sa mi to'}, ${likeCount} ľuďom sa to páči`}
+            accessibilityRole="button"
+            accessibilityState={{ checked: isLiked }}
+          >
+            <Ionicons 
+              name={isLiked ? "heart" : "heart-outline"} 
+              size={22} 
+              color={isLiked ? theme.primary : theme.text} 
+            />
+            <AccessibleText variant="body">
+              {likeCount}
+            </AccessibleText>
+          </TouchableOpacity>
 
           <View style={styles.footerItem}>
-            <TouchableOpacity style={styles.footerItem}>
-              <Ionicons name="chatbubble-outline" size={22} color={theme.text} />
-              <Text style={styles.footerText}>{commentCount}</Text>
-            </TouchableOpacity>
+            <Ionicons name="chatbubble-outline" size={22} color={theme.text} />
+            <AccessibleText variant="body">
+              {commentCount}
+            </AccessibleText>
           </View>
 
-          <TouchableOpacity style={styles.footerItem}>
+          <TouchableOpacity 
+            style={styles.footerItem}
+            accessibilityLabel="Zdieľať výlet"
+            accessibilityRole="button"
+          >
             <MaterialCommunityIcons
               name="share-outline"
               size={22}
               color={theme.text}
             />
-            <Text style={styles.footerText}>Share</Text>
+            <AccessibleText variant="body">
+              Share
+            </AccessibleText>
           </TouchableOpacity>
         </View>
 
-        {/* Comments Section */}
-        <View style={styles.commentsSection}>
-          <Text style={styles.commentsTitle}>Komentáre</Text>
+        <View 
+          style={styles.commentsSection}
+          accessibilityLabel={`Sekcia komentárov, ${commentCount} komentárov`}
+        >
+          <AccessibleText variant="bodyBold" style={styles.commentsTitleText}>
+            Komentáre
+          </AccessibleText>
+          
           <CommentsSection tripId={trip.id.toString()} refreshTrigger={refreshComments} />
-
 
           <View style={styles.commentsInput}>
             <TextInput
               placeholder="Pridať komentár..."
               placeholderTextColor={theme.thirdText}
               onChangeText={setComment}
+              value={comment}
               style={styles.input}
+              accessibilityLabel="Pole pre zadanie komentára"
+              accessibilityHint="Napíšte svoj komentár a odošlite tlačidlom odoslať"
             />
             <TouchableOpacity
               style={styles.sendButton}
-              onPress={handleCommentSubmit}>
-              <Text>
+              onPress={handleCommentSubmit}
+              accessibilityLabel="Odoslať komentár"
+              accessibilityRole="button"
+              disabled={comment.trim() === ""}
+            >
+              <AccessibleText 
+                variant="bodyBold" 
+                style={styles.sendButtonText}
+              >
                 Odoslať
-              </Text>
+              </AccessibleText>
             </TouchableOpacity>
           </View>
         </View>

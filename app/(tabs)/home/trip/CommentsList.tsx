@@ -1,19 +1,20 @@
-// Už asi hej
 import { fetchComments } from '@/utils/api';
 import { getToken } from '@/utils/auth';
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Image } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Image } from 'react-native';
 import { useTheme } from '@/app/ThemeContext';
-import { lightTheme, darkTheme } from '@/app/theme';
 import { useWebSocket } from '@/utils/WebSocketContext';
+import { AccessibleText } from '@/components/AccessibleText';
+import { useScaledStyles } from '@/utils/accessibilityUtils';
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 const CommentsSection = ({ tripId, refreshTrigger }: { tripId: string, refreshTrigger?: any }) => {
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useTheme();
   const { subscribe } = useWebSocket();
+  const { isTablet } = useScreenDimensions();
   
   useEffect(() => {
     const fetchData = async () => {
@@ -32,7 +33,7 @@ const CommentsSection = ({ tripId, refreshTrigger }: { tripId: string, refreshTr
     };
     fetchData();
 
-     const unsubscribe = subscribe('new-comment', (data) => {
+    const unsubscribe = subscribe('new-comment', (data) => {
       if (data.tripId.toString() === tripId) {
         setComments(prevComments => [
           ...prevComments,
@@ -51,35 +52,153 @@ const CommentsSection = ({ tripId, refreshTrigger }: { tripId: string, refreshTr
     };
   }, [tripId, refreshTrigger, subscribe]);
   
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('sk-SK', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
-  if (loading) return <ActivityIndicator />;
-  if (error) return <Text style={{ color: 'red' }}>{error}</Text>;
-  if (!comments.length) return <Text style={{color: theme.secondText}}>Zatiaľ žiadne komentáre</Text>;
+  const styles = useScaledStyles((scale) => ({
+    container: {
+      flex: 1,
+    },
+    loadingContainer: {
+      padding: 16 * Math.sqrt(scale),
+      alignItems: 'center',
+    },
+    errorContainer: {
+      padding: 16 * Math.sqrt(scale),
+      alignItems: 'center',
+    },
+    errorText: {
+      color: 'red',
+      fontSize: 14 * scale,
+    },
+    emptyText: {
+      fontSize: 14 * scale,
+      color: theme.secondText,
+      textAlign: 'center',
+      padding: 16 * Math.sqrt(scale),
+    },
+    commentItem: { 
+      padding: isTablet ? 14 * Math.sqrt(scale) : 10 * Math.sqrt(scale), 
+      borderBottomWidth: 1, 
+      borderBottomColor: theme.border,
+      marginBottom: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
+    },
+    commentContainer: { 
+      flexDirection: 'row', 
+      alignItems: 'center',
+    },
+    commentImage: { 
+      width: isTablet ? 42 * Math.sqrt(scale) : 35 * Math.sqrt(scale), 
+      height: isTablet ? 42 * Math.sqrt(scale) : 35 * Math.sqrt(scale), 
+      borderRadius: isTablet ? 21 * Math.sqrt(scale) : 17.5 * Math.sqrt(scale), 
+      marginRight: isTablet ? 14 * Math.sqrt(scale) : 10 * Math.sqrt(scale), 
+      backgroundColor: theme.background,
+    },
+    commentContent: { 
+      flex: 1, 
+      marginLeft: isTablet ? 8 * Math.sqrt(scale) : 5 * Math.sqrt(scale),
+    },
+    commentTextContainer: { 
+      marginTop: isTablet ? 8 * Math.sqrt(scale) : 5 * Math.sqrt(scale),
+    },
+    commentText: { 
+      fontSize: isTablet ? 16 * scale : 14 * scale, 
+      color: theme.text, 
+      marginTop: isTablet ? 8 * Math.sqrt(scale) : 5 * Math.sqrt(scale),
+    },
+    commentCreatedAt: { 
+      fontSize: isTablet ? 14 * scale : 12 * scale, 
+      color: theme.thirdText, 
+      marginTop: isTablet ? 6 * Math.sqrt(scale) : 5 * Math.sqrt(scale),
+    },
+  }));
 
-  const styles = StyleSheet.create({
-    commentItem: { padding: 10, borderBottomWidth: 1, borderBottomColor:  theme.secondText},
-    
-    commentContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: "fff" },
-    commentImage: { width: 35, height: 35, borderRadius: 25, marginRight: 10, backgroundColor: "fff" },
-    commentContent: { flex: 1, marginLeft: 5 },
-    commentTextContainer: { marginTop: 5 },
-    commentAuthor: { fontWeight: 'bold', fontSize: 14, color: theme.text },
-    commentText: { fontSize: 14, color: theme.text, marginTop: 5 },
-    commentCreatedAt: { fontSize: 12, color: theme.onSurfaceVariant, marginTop: 5 },
-  });
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator 
+          size="small" 
+          color={theme.primary} 
+          accessibilityLabel="Načítavanie komentárov"
+        />
+      </View>
+    );
+  }
+  
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <AccessibleText 
+          variant="body" 
+          color="red"
+          style={styles.errorText}
+          accessibilityLabel={`Chyba: ${error}`}
+        >
+          {error}
+        </AccessibleText>
+      </View>
+    );
+  }
+  
+  if (!comments.length) {
+    return (
+      <AccessibleText 
+        variant="body" 
+        style={styles.emptyText}
+        accessibilityLabel="Zatiaľ žiadne komentáre"
+      >
+        Zatiaľ žiadne komentáre
+      </AccessibleText>
+    );
+  }
 
   return (
-    <View>
+    <View 
+      style={styles.container}
+      accessibilityLabel={`${comments.length} komentárov`}
+    >
       {comments.map((comment, idx) => (
-        <View key={idx} style={styles.commentItem}>
+        <View 
+          key={idx} 
+          style={styles.commentItem}
+          accessibilityLabel={`Komentár od užívateľa ${comment.userId}: ${comment.commentText}`}
+        >
           <View style={styles.commentContainer}>
-            <Image source={require("@/assets/avatar_placeholder.png")} style={styles.commentImage} />  
+            <Image 
+              source={require("@/assets/avatar_placeholder.png")} 
+              style={styles.commentImage}
+              accessibilityLabel={`Profilový obrázok užívateľa ${comment.userId}`}
+            />  
             <View style={styles.commentContent}>
-              <Text style={styles.commentAuthor}>{comment.userId}</Text>
-              <Text style={styles.commentCreatedAt}>{comment.createdAt}</Text>
+              <AccessibleText 
+                variant="bodyBold"
+                color={theme.text}
+              >
+                {comment.userId}
+              </AccessibleText>
+              <AccessibleText 
+                variant="caption"
+                color={theme.thirdText}
+              >
+                {formatDate(comment.createdAt)}
+              </AccessibleText>
             </View>
           </View>
-          <Text style={styles.commentText}>{comment.commentText}</Text>
+          <AccessibleText 
+            variant="body"
+            style={styles.commentText}
+          >
+            {comment.commentText}
+          </AccessibleText>
         </View>
       ))}
     </View>

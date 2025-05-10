@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useState, useMemo } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { apiService } from '@/utils/api';
 import { Trip } from '@/utils/types';
 import { useTheme } from '@/app/ThemeContext';
-import { lightTheme, darkTheme } from '@/app/theme';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
+import { AccessibleText } from '@/components/AccessibleText';
+import { useScaledStyles } from '@/utils/accessibilityUtils';
+import { darkTheme } from '@/app/theme';
 
 type MarkedDates = {
   [date: string]: {
@@ -31,14 +33,6 @@ const activityIcons: Record<string, JSX.Element> = {
   cycling: <Ionicons name="bicycle" size={28} color="#fff" />,
   hiking: <MaterialCommunityIcons name="hiking" size={28} color="#fff" />,
   other: <Ionicons name="help" size={28} color="#fff" />,
-};
-
-const activityGradients: Record<string, string> = {
-  running: '#B8E4D3',
-  walking: '#B8E4D3',
-  cycling: '#D4C2FC',
-  hiking: '#F9D5A0',
-  other: '#F9D300',
 };
 
 function formatDuration(seconds: any): string {
@@ -67,9 +61,14 @@ const ProfileCalendarTab: React.FC = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
-  const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const [renderKey, setRenderKey] = useState(Date.now());
+  const { theme, fontScale, visionMode } = useTheme();
   const { isTablet } = useScreenDimensions();
+  const isDarkMode = theme.background === darkTheme.background;
+
+  useEffect(() => {
+    setRenderKey(Date.now());
+  }, [isDarkMode, visionMode, theme]);
 
   useEffect(() => {
     fetchTrips();
@@ -77,7 +76,7 @@ const ProfileCalendarTab: React.FC = () => {
 
   useEffect(() => {
     markCalendarDates();
-  }, [trips, selectedDate]);
+  }, [trips, selectedDate, visionMode, isDarkMode, theme]);
 
   const fetchTrips = async () => {
     try {
@@ -88,20 +87,74 @@ const ProfileCalendarTab: React.FC = () => {
     }
   };
 
+  const getActivityColor = (activityType: string) => {
+    const defaultColors: Record<string, string> = {
+      running: '#B8E4D3',
+      walking: '#B8E4D3',
+      cycling: '#D4C2FC',
+      hiking: '#F9D5A0',
+      other: '#F9D300',
+    };
+    
+    const highContrastColors: Record<string, string> = {
+      running: isDarkMode ? '#00FFAA' : '#006600',
+      walking: isDarkMode ? '#00DDFF' : '#004488',
+      cycling: isDarkMode ? '#FFCC00' : '#884400',
+      hiking: isDarkMode ? '#FF66FF' : '#660066',
+      other: isDarkMode ? '#FFFFFF' : '#000000',
+    };
+    
+    const deuteranopiaColors: Record<string, string> = {
+      running: '#0066CC', 
+      walking: '#5588CC', 
+      cycling: '#9966CC', 
+      hiking: '#CC6600', 
+      other: '#CCAA00', 
+    };
+    
+    const protanopiaColors: Record<string, string> = {
+      running: '#0099CC',
+      walking: '#66CCCC',
+      cycling: '#6699CC', 
+      hiking: '#FFCC00', 
+      other: '#99CC00', 
+    };
+    
+    const tritanopiaColors: Record<string, string> = {
+      running: '#669900',
+      walking: '#99CC00',
+      cycling: '#CC9900',
+      hiking: '#CC6600', 
+      other: '#FF9933', 
+    };
+    
+    switch(visionMode) {
+      case 'high-contrast':
+        return highContrastColors[activityType] || highContrastColors.other;
+      case 'deuteranopia':
+        return deuteranopiaColors[activityType] || deuteranopiaColors.other;
+      case 'protanopia':
+        return protanopiaColors[activityType] || protanopiaColors.other;
+      case 'tritanopia':
+        return tritanopiaColors[activityType] || tritanopiaColors.other;
+      default:
+        return defaultColors[activityType] || theme.primary;
+    }
+  };
+
   const markCalendarDates = () => {
     const marks: MarkedDates = {};
     const dotsByDate: Record<string, Array<{ key: string; color: string }>> = {};
 
     trips.forEach((trip, idx) => {
-        const date = trip.ended_at.split('T')[0];
-        if (!dotsByDate[date]) dotsByDate[date] = [];
-        dotsByDate[date].push({
-          key: `${trip.type}-${trip.id}`, 
-          color: activityGradients[trip.type] || theme.primary,
-        });
+      const date = trip.ended_at.split('T')[0];
+      if (!dotsByDate[date]) dotsByDate[date] = [];
+      dotsByDate[date].push({
+        key: `${trip.type}-${trip.id}`, 
+        color: getActivityColor(trip.type) 
       });
+    });
       
-
     Object.keys(dotsByDate).forEach((date) => {
       marks[date] = {
         dots: dotsByDate[date],
@@ -121,13 +174,42 @@ const ProfileCalendarTab: React.FC = () => {
     (trip) => trip.ended_at.split('T')[0] === selectedDate
   );
 
-  const styles = StyleSheet.create({
-    activities: { flex: 1, padding: 12 },
+  const calendarTheme = useMemo(() => ({
+    selectedDayBackgroundColor: theme.secondary,
+    todayTextColor: theme.primary,
+    arrowColor: theme.secondary,
+    monthTextColor: theme.text,
+    dayTextColor: theme.text,
+    textDisabledColor: theme.thirdText,
+    calendarBackground: theme.background,
+    textDayFontSize: 14 * fontScale,
+    textMonthFontSize: 16 * fontScale,
+    textDayHeaderFontSize: 14 * fontScale,
+    textSectionTitleColor: theme.text,
+    dotColor: theme.primary,
+    selectedDotColor: '#ffffff',
+    indicatorColor: theme.primary,
+  }), [theme, fontScale]);
+
+  const styles = useScaledStyles((scale) => ({
+    container: { 
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    calendar: {
+      marginBottom: 8,
+      backgroundColor: theme.background, 
+    },
+    activities: { 
+      flex: 1, 
+      padding: 12 * Math.sqrt(scale),
+      backgroundColor: theme.background, 
+    },
     noActivities: { 
       textAlign: 'center', 
       color: theme.secondText, 
-      marginTop: isTablet ? 24 : 16, 
-      fontSize: isTablet ? 16 : 14,
+      marginTop: isTablet ? 24 * Math.sqrt(scale) : 16 * Math.sqrt(scale), 
+      fontSize: isTablet ? 16 * scale : 14 * scale,
     },
     activityCard: {
       flexDirection: 'row',
@@ -136,8 +218,8 @@ const ProfileCalendarTab: React.FC = () => {
       borderRadius: 32,
       borderWidth: 1.5,
       borderColor: theme.border,
-      padding: isTablet ? 24 : 20,
-      marginBottom: isTablet ? 24 :20,
+      padding: isTablet ? 24 * Math.sqrt(scale) : 20 * Math.sqrt(scale),
+      marginBottom: isTablet ? 24 * Math.sqrt(scale) : 20 * Math.sqrt(scale),
       shadowColor: theme.shadow,
       shadowOpacity: 0.04,
       shadowRadius: 8,
@@ -145,112 +227,94 @@ const ProfileCalendarTab: React.FC = () => {
       elevation: 2,
     },
     iconCircle: {
-      width: isTablet ? 64 : 56,
-      height: isTablet ? 64: 56,
-      borderRadius: isTablet ? 32 : 28,
+      width: isTablet ? 64 * Math.sqrt(scale) : 56 * Math.sqrt(scale),
+      height: isTablet ? 64 * Math.sqrt(scale) : 56 * Math.sqrt(scale),
+      borderRadius: isTablet ? 32 * Math.sqrt(scale) : 28 * Math.sqrt(scale),
       justifyContent: 'center',
       alignItems: 'center',
-      marginRight: isTablet ? 24 : 18,
+      marginRight: isTablet ? 24 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
     },
     activityDetails: {
       flex: 1,
       justifyContent: 'center',
-    },
-    activityType: {
-      fontWeight: 'bold',
-      fontSize: isTablet ? 21 : 19,
-      color: theme.text,
-    },
-    activitySub: {
-      color: theme.thirdText,
-      fontSize: isTablet ? 17 :15,
-      marginTop: 2,
-      fontWeight: '400',
     },
     activityStats: {
       alignItems: 'flex-end',
       justifyContent: 'center',
       minWidth: isTablet ? 100 : 90,
     },
-    kmText: {
-      fontWeight: 'bold',
-      fontSize: isTablet ? 19 : 17,
-      color: theme.text,
-    },
     kcalRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginTop: 4,
+      marginTop: 4 * Math.sqrt(scale),
     },
     kcalIcon: {
-      marginRight: 4,
+      marginRight: 4 * Math.sqrt(scale),
     },
-    kcalText: {
-      color: theme.thirdText,
-      fontSize: isTablet ? 17 : 15,
-      fontWeight: '400',
-    },
-  });
+  }));
+
+  console.log("Rendering calendar with theme:", isDarkMode ? "dark" : "light", "Vision mode:", visionMode);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <Calendar
-        key={`calendar-${isDarkMode ? 'dark' : 'light'}`}
+        key={`calendar-${renderKey}`}
         markingType="multi-dot"
         markedDates={markedDates}
         onDayPress={(day: any) => setSelectedDate(day.dateString)}
         current={selectedDate}
-        theme={{
-          selectedDayBackgroundColor: theme.secondary,
-          todayTextColor: theme.primary,
-          arrowColor: theme.secondary,
-          monthTextColor: theme.text,
-          dayTextColor: theme.text,
-          textDisabledColor: theme.thirdText,
-          calendarBackground: theme.statBackground,
-        }}
-        style={{ marginBottom: 8 }}
+        theme={calendarTheme}
+        style={styles.calendar}
       />
 
       <ScrollView style={styles.activities} contentContainerStyle={{ paddingBottom: 32 }}>
         {dayTrips.length === 0 ? (
-          <Text style={styles.noActivities}>Žiadne aktivity v tento deň.</Text>
+          <AccessibleText style={styles.noActivities}>
+            Žiadne aktivity v tento deň.
+          </AccessibleText>
         ) : (
             dayTrips.map((trip) => {
                 const typeKey = (trip.type || '').toLowerCase();
                 const distance = Number(trip.distance_km || 0);
                 const calories = estimateCalories(typeKey, distance);
+                const activityColor = getActivityColor(typeKey);
               
                 return (
-                  <View key={trip.id} style={styles.activityCard}>
+                  <TouchableOpacity 
+                    key={trip.id} 
+                    style={styles.activityCard}
+                    accessibilityLabel={`${activityLabels[typeKey] || typeKey} na ${distance.toFixed(2)} kilometrov, ${formatDuration(trip.duration_seconds)}`}
+                  >
                     <View
                       style={[
                         styles.iconCircle,
-                        { backgroundColor: activityGradients[typeKey] || theme.background },
+                        { backgroundColor: activityColor },
                       ]}
                     >
                       {activityIcons[typeKey] || (
-                        <Ionicons name="walk-outline" size={28} color={theme.primary} />
+                        <Ionicons name="walk-outline" size={28} color={theme.card} />
                       )}
                     </View>
                     <View style={styles.activityDetails}>
-                      <Text style={styles.activityType}>
+                      <AccessibleText variant="bodyBold">
                         {activityLabels[typeKey] || typeKey}
-                      </Text>
-                      <Text style={styles.activitySub}>{formatDuration(trip.duration_seconds)}</Text>
+                      </AccessibleText>
+                      <AccessibleText variant="caption">
+                        {formatDuration(trip.duration_seconds)}
+                      </AccessibleText>
                     </View>
                     <View style={styles.activityStats}>
-                      <Text style={styles.kmText}>
+                      <AccessibleText variant="bodyBold">
                         {distance.toFixed(2)} km
-                      </Text>
+                      </AccessibleText>
                       <View style={styles.kcalRow}>
                         <Ionicons name="water-outline" size={16} color={theme.thirdText} style={styles.kcalIcon} />
-                        <Text style={styles.kcalText}>
+                        <AccessibleText variant="caption">
                           {calories} kcal
-                        </Text>
+                        </AccessibleText>
                       </View>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 );
               })
         )}              

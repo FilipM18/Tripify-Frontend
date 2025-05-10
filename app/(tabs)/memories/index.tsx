@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image, Modal } from 'react-native';
+import { View, TouchableOpacity, Image, Modal, ActivityIndicator } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -9,10 +9,14 @@ import { apiService } from '../../../utils/api';
 import { PhotoLocation, MemoryCluster } from '../../../utils/types';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 import { getToken } from '@/utils/auth';
+import { useTheme } from '@/app/ThemeContext';
+import { AccessibleText } from '@/components/AccessibleText';
+import { useScaledStyles } from '@/utils/accessibilityUtils';
 
 export default function MemoriesScreen() {
   const router = useRouter();
   const { isTablet, width, height } = useScreenDimensions();
+  const { theme, visionMode } = useTheme();
   const [region, setRegion] = useState({
     latitude: 48.1486, // Default: Bratislava
     longitude: 17.1077,
@@ -41,12 +45,11 @@ export default function MemoriesScreen() {
         latitude: typeof photo.latitude === 'string' ? parseFloat(photo.latitude) : photo.latitude,
         longitude: typeof photo.longitude === 'string' ? parseFloat(photo.longitude) : photo.longitude,
       }));
-      //console.log('[fetchAllPhotos] Parsed photo data:', parsedPhotoData);
       setPhotos(parsedPhotoData);
       const clusters = clusterPhotos(parsedPhotoData);
       setMemoryClusters(clusters);
     } catch (error) {
-      //console.error('Error fetching photos:', error);
+      console.error('Error fetching photos:', error);
       setErrorMsg('Failed to load memories');
     } finally {
       setLoading(false);
@@ -77,7 +80,6 @@ export default function MemoriesScreen() {
     })();
   }, []);
 
-  // Group nearby photos to create clusters
   const clusterPhotos = (photoList: PhotoLocation[], radius: number = 0.005): MemoryCluster[] => {
     if (!photoList.length) return [];
     
@@ -135,8 +137,19 @@ export default function MemoriesScreen() {
     setModalVisible(false);
     setSelectedMemory(null);
   };
+  
+  const getMarkerAccessibilityLabel = (cluster: MemoryCluster) => {
+    if (cluster.photos.length === 1) {
+      const photo = cluster.photos[0];
+      return photo.description 
+        ? `Fotografia: ${photo.description}` 
+        : 'Fotografia na mape';
+    } else {
+      return `Skupina ${cluster.photos.length} fotografií`;
+    }
+  };
 
-  const styles = StyleSheet.create({
+  const styles = useScaledStyles((scale) => ({
     container: {
       flex: 1,
     },
@@ -144,30 +157,51 @@ export default function MemoriesScreen() {
       width: '100%',
       height: '100%',
     },
+    loadingContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.3)',
+    },
+    errorText: {
+      textAlign: 'center',
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      color: 'white',
+      padding: 16 * Math.sqrt(scale),
+      position: 'absolute',
+      top: 50 * Math.sqrt(scale),
+      left: 20 * Math.sqrt(scale),
+      right: 20 * Math.sqrt(scale),
+      borderRadius: 8 * Math.sqrt(scale),
+    },
     markerContainer: {
       alignItems: 'center',
     },
     singleMarker: {
-      width: isTablet ? 48 : 36,
-      height: isTablet ? 48 : 36,
-      borderRadius: isTablet ? 24 : 18,
+      width: isTablet ? 48 * Math.sqrt(scale) : 36 * Math.sqrt(scale),
+      height: isTablet ? 48 * Math.sqrt(scale) : 36 * Math.sqrt(scale),
+      borderRadius: isTablet ? 24 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
       backgroundColor: 'white',
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 2,
-      borderColor: '#4CAF50',
+      borderColor: theme.primary,
       overflow: 'hidden',
     },
     markerImage: {
-      width: isTablet ? 44 : 32,
-      height: isTablet ? 44 : 32,
-      borderRadius: isTablet ? 22 : 16,
+      width: isTablet ? 44 * Math.sqrt(scale) : 32 * Math.sqrt(scale),
+      height: isTablet ? 44 * Math.sqrt(scale) : 32 * Math.sqrt(scale),
+      borderRadius: isTablet ? 22 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
     },
     clusterMarker: {
-      width: isTablet ? 48 : 36,
-      height: isTablet ? 48 : 36,
-      borderRadius: isTablet ? 24 : 18,
-      backgroundColor: '#4CAF50',
+      width: isTablet ? 48 * Math.sqrt(scale) : 36 * Math.sqrt(scale),
+      height: isTablet ? 48 * Math.sqrt(scale) : 36 * Math.sqrt(scale),
+      borderRadius: isTablet ? 24 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
+      backgroundColor: theme.primary,
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 2,
@@ -176,7 +210,7 @@ export default function MemoriesScreen() {
     clusterText: {
       color: 'white',
       fontWeight: 'bold',
-      fontSize: isTablet ? 16 : 14,
+      fontSize: isTablet ? 16 * scale : 14 * scale,
     },
     modalContainer: {
       flex: 1,
@@ -187,19 +221,19 @@ export default function MemoriesScreen() {
     modalContent: {
       width: isTablet ? width * 0.7 : width * 0.9,
       height: isTablet ? height * 0.8 : height * 0.7,
-      backgroundColor: 'black',
-      borderRadius: 10,
+      backgroundColor: theme.card,
+      borderRadius: 10 * Math.sqrt(scale),
       overflow: 'hidden',
     },
     closeButton: {
       position: 'absolute',
-      top: isTablet ? 20 : 10,
-      right: isTablet ? 20 : 10,
+      top: isTablet ? 20 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
+      right: isTablet ? 20 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
       zIndex: 10,
-      width: isTablet ? 48 : 36,
-      height: isTablet ? 48 : 36,
-      borderRadius: isTablet ? 24 : 18,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      width: isTablet ? 48 * Math.sqrt(scale) : 36 * Math.sqrt(scale),
+      height: isTablet ? 48 * Math.sqrt(scale) : 36 * Math.sqrt(scale),
+      borderRadius: isTablet ? 24 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
+      backgroundColor: theme.primary,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -213,12 +247,11 @@ export default function MemoriesScreen() {
       height: isTablet ? '80%' : '90%',
     },
     description: {
-      color: 'white',
-      padding: isTablet ? 16 : 10,
+      padding: isTablet ? 16 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
       textAlign: 'center',
-      fontSize: isTablet ? 18 : 14,
+      fontSize: isTablet ? 18 * scale : 14 * scale,
     }
-  });
+  }));
 
   return (
     <View style={styles.container}>
@@ -227,17 +260,25 @@ export default function MemoriesScreen() {
         style={styles.map}
         region={region}
         onRegionChangeComplete={setRegion}
+        accessibilityLabel="Mapa spomienok"
       >
         {memoryClusters.map((cluster, index) => (
           <Marker
             key={index}
             coordinate={cluster.coordinate}
             onPress={() => handleMarkerPress(cluster)}
+            accessibilityLabel={getMarkerAccessibilityLabel(cluster)}
           >
             <View style={styles.markerContainer}>
               {cluster.photos.length > 1 ? (
                 <View style={styles.clusterMarker}>
-                  <Text style={styles.clusterText}>{cluster.photos.length}</Text>
+                  <AccessibleText 
+                    variant="bodyBold"
+                    color="white"
+                    style={styles.clusterText}
+                  >
+                    {cluster.photos.length}
+                  </AccessibleText>
                 </View>
               ) : (
                 <View style={styles.singleMarker}>
@@ -252,7 +293,26 @@ export default function MemoriesScreen() {
         ))}
       </MapView>
 
-      {/* Photo preview modal */}
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator 
+            size="large" 
+            color={theme.primary} 
+            accessibilityLabel="Načítavanie fotografií"
+          />
+        </View>
+      )}
+
+      {errorMsg !== '' && (
+        <AccessibleText 
+          variant="body"
+          style={styles.errorText}
+          accessibilityLabel={`Chyba: ${errorMsg}`}
+        >
+          {errorMsg}
+        </AccessibleText>
+      )}
+
       <Modal
         animationType="slide"
         transparent={true}
@@ -261,19 +321,36 @@ export default function MemoriesScreen() {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={handleCloseModal}
+              accessibilityLabel="Zavrieť detail"
+              accessibilityRole="button"
+            >
               <Ionicons name="close" size={isTablet ? 28 : 24} color="white" />
             </TouchableOpacity>
             
             {selectedMemory && (
-              <View style={styles.photoContainer}>
+              <View 
+                style={styles.photoContainer}
+                accessibilityLabel={selectedMemory.description 
+                  ? `Detail fotografie: ${selectedMemory.description}` 
+                  : "Detail fotografie"}
+              >
                 <Image 
                   source={{ uri: `${API_URL}${selectedMemory.photo_url}` }}
                   style={styles.fullImage}
                   resizeMode="contain"
+                  accessibilityLabel="Fotografia vo veľkom náhľade"
                 />
                 {selectedMemory.description && (
-                  <Text style={styles.description}>{selectedMemory.description}</Text>
+                  <AccessibleText 
+                    variant="body"
+                    color={theme.text}
+                    style={styles.description}
+                  >
+                    {selectedMemory.description}
+                  </AccessibleText>
                 )}
               </View>
             )}

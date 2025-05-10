@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { useTheme } from '@/app/ThemeContext';
-import { lightTheme, darkTheme } from '@/app/theme';
+import { AccessibleText } from '@/components/AccessibleText';
+import { useScaledStyles } from '@/utils/accessibilityUtils';
+import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 
 interface StatsDisplayProps {
   duration: number;
@@ -10,8 +12,8 @@ interface StatsDisplayProps {
 }
 
 export default function StatsDisplay({ duration, distance, pace }: StatsDisplayProps) {
-  const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme; 
+  const { theme } = useTheme();
+  const { isTablet } = useScreenDimensions();
 
   const formatDuration = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
@@ -20,7 +22,7 @@ export default function StatsDisplay({ duration, distance, pace }: StatsDisplayP
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const styles = StyleSheet.create({
+  const styles = useScaledStyles((scale) => ({
     container: {
       position: 'absolute',
       bottom: 0,
@@ -28,7 +30,7 @@ export default function StatsDisplay({ duration, distance, pace }: StatsDisplayP
       right: 0,
       flexDirection: 'row',
       justifyContent: 'space-around',
-      padding: 15,
+      padding: isTablet ? 20 * Math.sqrt(scale) : 15 * Math.sqrt(scale),
       backgroundColor: theme.card,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
@@ -36,35 +38,43 @@ export default function StatsDisplay({ duration, distance, pace }: StatsDisplayP
     },
     statBox: {
       alignItems: 'center',
-      paddingHorizontal: 10,
+      paddingHorizontal: isTablet ? 15 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
     },
-    statValue: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: theme.text,
-    },
-    statLabel: {
-      fontSize: 14,
-      color: theme.thirdText,
-      marginTop: 5,
-    },
-  });
+  }));
+
+  const accessibilityLabel = `Štatistiky: Čas ${formatDuration(duration)}, Vzdialenosť ${distance.toFixed(2)} kilometrov, Tempo ${pace.toFixed(1)} kilometrov za hodinu`;
 
   return (
-    <View style={styles.container}>
+    <View 
+      style={styles.container} 
+      accessibilityRole="summary"
+      accessibilityLabel={accessibilityLabel}
+    >
       <View style={styles.statBox}>
-        <Text style={styles.statValue}>{formatDuration(duration)}</Text>
-        <Text style={styles.statLabel}>Čas</Text>
+        <AccessibleText 
+          variant={isTablet ? "header2" : "bodyBold"}
+        >
+          {formatDuration(duration)}
+        </AccessibleText>
+        <AccessibleText variant="caption">Čas</AccessibleText>
       </View>
       
       <View style={styles.statBox}>
-        <Text style={styles.statValue}>{distance.toFixed(2)}</Text>
-        <Text style={styles.statLabel}>Vzdialenosť (km)</Text>
+        <AccessibleText 
+          variant={isTablet ? "header2" : "bodyBold"}
+        >
+          {distance.toFixed(2)}
+        </AccessibleText>
+        <AccessibleText variant="caption">Vzdialenosť (km)</AccessibleText>
       </View>
       
       <View style={styles.statBox}>
-        <Text style={styles.statValue}>{pace.toFixed(1)}</Text>
-        <Text style={styles.statLabel}>Tempo (km/h)</Text>
+        <AccessibleText 
+          variant={isTablet ? "header2" : "bodyBold"}
+        >
+          {pace.toFixed(1)}
+        </AccessibleText>
+        <AccessibleText variant="caption">Tempo (km/h)</AccessibleText>
       </View>
     </View>
   );

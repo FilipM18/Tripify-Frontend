@@ -11,15 +11,15 @@ import {
   Alert
 } from 'react-native';
 import { useTheme } from '../../ThemeContext'; 
-import { lightTheme, darkTheme } from '../../theme'; 
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 import { getToken, removeToken } from '@/utils/auth';
 import { apiRequest } from '@/utils/api';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function SettingsScreen() {
-  const { isDarkMode, toggleTheme } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { isDarkMode, toggleTheme, fontScale } = useTheme();
   const { isTablet } = useScreenDimensions();
+  const theme = useTheme().theme; 
 
   const handleLogout = async () => {
     try {
@@ -30,8 +30,8 @@ export default function SettingsScreen() {
       await removeToken();
       router.replace('/(auth)/login');
     } catch (error) {
-      console.error('Logout error:', error);
-      Alert.alert('Logout failed', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Chyba pri odhlásení:', error);
+      Alert.alert('Odhlásenie zlyhalo', error instanceof Error ? error.message : 'Neznáma chyba');
     }
   };
 
@@ -49,7 +49,7 @@ export default function SettingsScreen() {
       alignItems: 'center',
     },
     headerTitle: {
-      fontSize: isTablet ? 24 : 20,
+      fontSize: isTablet ? 24 * fontScale : 20 * fontScale,
       fontWeight: 'bold',
       color: theme.text,
     },
@@ -65,15 +65,21 @@ export default function SettingsScreen() {
       borderBottomColor: theme.border,
     },
     menuText: {
-      fontSize: isTablet ? 20: 16,
+      fontSize: isTablet ? 20 * fontScale : 16 * fontScale,
       marginLeft: isTablet ? 20 : 16,
       color: theme.text,
+    },
+    menuIcon: {
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     spacer: {
       flex: 1,
     },
     arrow: {
-      fontSize: isTablet ? 20 : 16,
+      fontSize: isTablet ? 20 * fontScale : 16 * fontScale,
       color: theme.text,
     },
   });
@@ -86,35 +92,59 @@ export default function SettingsScreen() {
       
       <ScrollView style={styles.scrollView}>
         <TouchableOpacity style={styles.menuItem} onPress={() => {router.push(`/settings/profile`)}}>
+          <View style={styles.menuIcon}>
+            <Ionicons name="person-outline" size={24} color={theme.text} />
+          </View>
           <Text style={styles.menuText}>Profil</Text>
           <View style={styles.spacer} />
           <Text style={styles.arrow}>›</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.menuItem} onPress={() => {router.push(`/settings/password`)}}>
+          <View style={styles.menuIcon}>
+            <Ionicons name="key-outline" size={24} color={theme.text} />
+          </View>
           <Text style={styles.menuText}>Heslo</Text>
           <View style={styles.spacer} />
           <Text style={styles.arrow}>›</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.menuItem} onPress={() => {router.push(`/settings/notifications`)}}>
+          <View style={styles.menuIcon}>
+            <Ionicons name="notifications-outline" size={24} color={theme.text} />
+          </View>
           <Text style={styles.menuText}>Notifikácie</Text>
           <View style={styles.spacer} />
           <Text style={styles.arrow}>›</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.menuItem} onPress={() => {router.push(`/settings/accessibility`)}}>
+          <View style={styles.menuIcon}>
+            <Ionicons name="accessibility-outline" size={24} color={theme.text} />
+          </View>
+          <Text style={styles.menuText}>Prístupnosť</Text>
+          <View style={styles.spacer} />
+          <Text style={styles.arrow}>›</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.menuItem} onPress={toggleTheme}>
+          <View style={styles.menuIcon}>
+            <Ionicons name={isDarkMode ? "moon-outline" : "sunny-outline"} size={24} color={theme.text} />
+          </View>
           <Text style={styles.menuText}>Tmavý režim</Text>
           <View style={styles.spacer} />
           <Switch 
             value={isDarkMode}
             onValueChange={toggleTheme}
-            trackColor={{ false: "#767577", true: "#81b0ff" }}
+            trackColor={{ false: "#767577", true: theme.primary }}
             thumbColor={isDarkMode ? "#f5dd4b" : "#f4f3f4"}
           />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+          <View style={styles.menuIcon}>
+            <Ionicons name="log-out-outline" size={24} color={theme.text} />
+          </View>
           <Text style={styles.menuText}>Odhlásiť sa</Text>
           <View style={styles.spacer} />
           <Text style={styles.arrow}>›</Text>

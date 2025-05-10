@@ -1,22 +1,19 @@
-import React from 'react';
-import { View, StyleSheet, FlatList, Image, TouchableOpacity, Text, Dimensions, Modal } from 'react-native';
+import React, { useState } from 'react';
+import { View, FlatList, Image, TouchableOpacity, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
 import { API_URL } from '../../../utils/constants';
 import { PhotoLocation } from '../../../utils/types';
 import { useTheme } from '@/app/ThemeContext';
-import { lightTheme, darkTheme } from '@/app/theme';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
-
-const { width } = Dimensions.get('window');
+import { AccessibleText } from '@/components/AccessibleText';
+import { useScaledStyles } from '@/utils/accessibilityUtils';
 
 export default function MemoryClusterScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const photos: PhotoLocation[] = JSON.parse(params.photos as string);
-  const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useTheme();
   const { isTablet, width } = useScreenDimensions();
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoLocation | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -40,7 +37,7 @@ export default function MemoryClusterScreen() {
     });
   };
 
-  const styles = StyleSheet.create({
+  const styles = useScaledStyles((scale) => ({
     container: {
       flex: 1,
       backgroundColor: theme.background,
@@ -48,24 +45,24 @@ export default function MemoryClusterScreen() {
     header: {
       flexDirection: 'row',
       alignItems: 'center',
-      padding: isTablet ? 20 : 16,
+      padding: isTablet ? 20 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
       backgroundColor: theme.secondary,
     },
     backButton: {
-      padding: isTablet ? 12 : 8,
+      padding: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
     },
     title: {
-      fontSize: isTablet ? 22 : 18,
+      fontSize: isTablet ? 22 * scale : 18 * scale,
       fontWeight: 'bold',
-      marginLeft: isTablet ? 20 : 16,
+      marginLeft: isTablet ? 20 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
       color: theme.text,
     },
     photoItem: {
       width: isTablet ? width / 4 : width / 3,
       height: isTablet ? width / 4 : width / 3,
-      padding: 1,
+      padding: 1 * Math.sqrt(scale),
     },
     thumbnail: {
       width: '100%',
@@ -86,12 +83,12 @@ export default function MemoryClusterScreen() {
     },
     closeButton: {
       position: 'absolute',
-      top: isTablet ? 50: 40,
-      right: isTablet ? 30: 20,
+      top: isTablet ? 50 * Math.sqrt(scale) : 40 * Math.sqrt(scale),
+      right: isTablet ? 30 * Math.sqrt(scale) : 20 * Math.sqrt(scale),
       zIndex: 10,
-      width: isTablet ? 48: 36,
-      height: isTablet ? 48 : 36,
-      borderRadius: isTablet ? 24 : 18,
+      width: isTablet ? 48 * Math.sqrt(scale) : 36 * Math.sqrt(scale),
+      height: isTablet ? 48 * Math.sqrt(scale) : 36 * Math.sqrt(scale),
+      borderRadius: isTablet ? 24 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
       backgroundColor: theme.primary,
       justifyContent: 'center',
       alignItems: 'center',
@@ -108,40 +105,49 @@ export default function MemoryClusterScreen() {
     },
     photoInfo: {
       width: isTablet ? '80%' : '100%',
-      padding: isTablet ? 24 : 16,
+      padding: isTablet ? 24 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
       alignItems: 'center',
     },
     description: {
-      color: theme.text,
-      fontSize: isTablet ? 18 : 16,
-      marginBottom: isTablet ? 12 : 8,
+      fontSize: isTablet ? 18 * scale : 16 * scale,
+      marginBottom: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
       textAlign: 'center',
     },
     dateText: {
-      color: theme.secondText,
-      fontSize: isTablet ? 16 : 14,
-      marginBottom: isTablet ? 20 : 16,
+      fontSize: isTablet ? 16 * scale : 14 * scale,
+      marginBottom: isTablet ? 20 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
     },
     tripButton: {
-      backgroundColor: '#4CAF50',
-      paddingHorizontal: isTablet ? 24 : 16,
-      paddingVertical: isTablet ? 12 : 8,
-      borderRadius: 20,
+      backgroundColor: theme.primary,
+      paddingHorizontal: isTablet ? 24 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
+      paddingVertical: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
+      borderRadius: 20 * Math.sqrt(scale),
     },
     tripButtonText: {
       color: theme.card,
       fontWeight: 'bold',
-      fontSize: isTablet ? 16 : 14,
+      fontSize: isTablet ? 16 * scale : 14 * scale,
     },
-  });
+  }));
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          style={styles.backButton}
+          accessibilityLabel="Späť"
+          accessibilityRole="button"
+          accessibilityHint="Návrat na predchádzajúcu obrazovku"
+        >
           <Ionicons name="arrow-back" size={24} color={theme.card} />
         </TouchableOpacity>
-        <Text style={styles.title}>Memory Cluster ({photos.length})</Text>
+        <AccessibleText 
+          variant="header2" 
+          style={styles.title}
+        >
+          Memory Cluster ({photos.length})
+        </AccessibleText>
       </View>
 
       <FlatList
@@ -152,6 +158,11 @@ export default function MemoryClusterScreen() {
           <TouchableOpacity 
             style={styles.photoItem} 
             onPress={() => handlePhotoPress(item)}
+            accessibilityLabel={item.description ? 
+              `Fotografia: ${item.description}, ${formatDate(item.created_at)}` : 
+              `Fotografia z ${formatDate(item.created_at)}`}
+            accessibilityRole="image"
+            accessibilityHint="Kliknutím zobrazíte detail fotografie"
           >
             <Image 
               source={{ uri: `${API_URL}${item.photo_url}` }} 
@@ -159,6 +170,7 @@ export default function MemoryClusterScreen() {
             />
           </TouchableOpacity>
         )}
+        accessibilityLabel={`Galéria fotografií, ${photos.length} fotografií`}
       />
 
       <Modal
@@ -169,12 +181,22 @@ export default function MemoryClusterScreen() {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={closeModal}
+              accessibilityLabel="Zavrieť detail"
+              accessibilityRole="button"
+            >
               <Ionicons name="close" size={24} color={theme.card} />
             </TouchableOpacity>
             
             {selectedPhoto && (
-              <View style={styles.photoContainer}>
+              <View 
+                style={styles.photoContainer}
+                accessibilityLabel={selectedPhoto.description ? 
+                  `Detailný pohľad na fotografiu: ${selectedPhoto.description}, vytvorená ${formatDate(selectedPhoto.created_at)}` : 
+                  `Detailný pohľad na fotografiu z ${formatDate(selectedPhoto.created_at)}`}
+              >
                 <Image 
                   source={{ uri: `${API_URL}${selectedPhoto.photo_url}` }}
                   style={styles.fullImage}
@@ -182,11 +204,21 @@ export default function MemoryClusterScreen() {
                 />
                 <View style={styles.photoInfo}>
                   {selectedPhoto.description && (
-                    <Text style={styles.description}>{selectedPhoto.description}</Text>
+                    <AccessibleText 
+                      variant="body" 
+                      color={theme.text}
+                      style={styles.description}
+                    >
+                      {selectedPhoto.description}
+                    </AccessibleText>
                   )}
-                  <Text style={styles.dateText}>
+                  <AccessibleText 
+                    variant="caption" 
+                    color={theme.secondText}
+                    style={styles.dateText}
+                  >
                     {formatDate(selectedPhoto.created_at)}
-                  </Text>
+                  </AccessibleText>
                   <TouchableOpacity 
                     style={styles.tripButton}
                     onPress={() => {
@@ -196,8 +228,17 @@ export default function MemoryClusterScreen() {
                         params: { id: selectedPhoto.trip_id }
                       });
                     }}
+                    accessibilityLabel="Zobraziť výlet"
+                    accessibilityRole="button"
+                    accessibilityHint="Zobrazí súvisiaci výlet"
                   >
-                    <Text style={styles.tripButtonText}>View Trip</Text>
+                    <AccessibleText 
+                      variant="bodyBold" 
+                      color={theme.card}
+                      style={styles.tripButtonText}
+                    >
+                      View Trip
+                    </AccessibleText>
                   </TouchableOpacity>
                 </View>
               </View>

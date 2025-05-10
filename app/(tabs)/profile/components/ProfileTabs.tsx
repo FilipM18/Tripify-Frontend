@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '@/app/ThemeContext';
-import { lightTheme, darkTheme } from '@/app/theme';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
+import { AccessibleText } from '@/components/AccessibleText';
+import { useScaledStyles } from '@/utils/accessibilityUtils';
 
 interface ProfileTabsProps {
   activeTab: string;
@@ -10,8 +11,7 @@ interface ProfileTabsProps {
 }
 
 const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, onTabChange }) => {
-  const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useTheme();
   const { isTablet } = useScreenDimensions();
 
   const tabs = [
@@ -20,7 +20,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, onTabChange }) => 
     { id: 'info', label: 'Informácie' },
   ];
 
-  const styles = StyleSheet.create({
+  const styles = useScaledStyles((scale) => ({
     container: {
       flexDirection: 'row',
       borderBottomWidth: 1,
@@ -29,20 +29,11 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, onTabChange }) => 
     tab: {
       flex: 1,
       alignItems: 'center',
-      paddingVertical: isTablet ? 16 : 12,
+      paddingVertical: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
       position: 'relative',
     },
     activeTab: {
       backgroundColor: theme.background,
-    },
-    tabText: {
-      fontSize: isTablet ? 16 : 14,
-      fontWeight: '500',
-      color: theme.text,
-    },
-    activeTabText: {
-      color: theme.primary,
-      fontWeight: '600',
     },
     activeIndicator: {
       position: 'absolute',
@@ -53,7 +44,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, onTabChange }) => 
       borderTopLeftRadius: 3,
       borderTopRightRadius: 3,
     },
-  });
+  }));
 
   return (
     <View style={styles.container}>
@@ -65,13 +56,17 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, onTabChange }) => 
             activeTab === tab.label && styles.activeTab
           ]}
           onPress={() => onTabChange(tab.label)}
+          accessibilityLabel={tab.label}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === tab.label }}
         >
-          <Text style={[
-            styles.tabText,
-            activeTab === tab.label && styles.activeTabText
-          ]}>
+          <AccessibleText 
+            variant="body"
+            color={activeTab === tab.label ? theme.primary : theme.text}
+            style={{ fontWeight: activeTab === tab.label ? 'bold' : 'normal' }}
+          >
             {tab.label}
-          </Text>
+          </AccessibleText>
           {activeTab === tab.label && <View style={styles.activeIndicator} />}
         </TouchableOpacity>
       ))}

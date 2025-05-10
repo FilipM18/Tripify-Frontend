@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity, Text } from 'react-native';
 import { API_URL } from '@/utils/constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/app/ThemeContext';
-import { lightTheme, darkTheme } from '@/app/theme';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
+import { AccessibleText } from '@/components/AccessibleText';
+import { useScaledStyles } from '@/utils/accessibilityUtils';
 
 interface ProfileHeaderProps {
   username: string;
@@ -17,8 +18,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   photoUrl,
   streak,
 }) => {
-  const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme, fontScale } = useTheme();
   const { isTablet } = useScreenDimensions();
 
   const fullPhotoUrl = photoUrl ? `${API_URL}${photoUrl}` : null;
@@ -30,34 +30,34 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     else return `Active streak: ${count} dní 🔥🔥`;
   };
 
-  const styles = StyleSheet.create({
+  const styles = useScaledStyles((scale) => ({
     container: {
       position: 'relative',
     },
     headerBackground: {
-      height: isTablet ? 120 : 100,
-      backgroundColor: '#8BA872',
+      height: isTablet ? 120 * Math.sqrt(scale) : 100 * Math.sqrt(scale),
+      backgroundColor: theme.secondary,
       width: '100%',
     },
     profileContent: {
       alignItems: 'center',
-      paddingBottom: isTablet ? 20 : 16,
+      paddingBottom: isTablet ? 20 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
     },
     avatarContainer: {
-      marginTop: isTablet ? -50 : -40,
+      marginTop: isTablet ? -50 * Math.sqrt(scale) : -40 * Math.sqrt(scale),
     },
     avatar: {
-      width: isTablet ? 100 : 80,
-      height: isTablet ? 100 : 80,
-      borderRadius: isTablet ? 50 : 40,
+      width: isTablet ? 100 * Math.sqrt(scale) : 80 * Math.sqrt(scale),
+      height: isTablet ? 100 * Math.sqrt(scale) : 80 * Math.sqrt(scale),
+      borderRadius: isTablet ? 50 * Math.sqrt(scale) : 40 * Math.sqrt(scale),
       borderWidth: 3,
       borderColor: theme.border,
       backgroundColor: theme.background,
     },
     avatarPlaceholder: {
-      width: isTablet ? 100 : 80,
-      height: isTablet ? 100 : 80,
-      borderRadius: isTablet ? 50 : 40,
+      width: isTablet ? 100 * Math.sqrt(scale) : 80 * Math.sqrt(scale),
+      height: isTablet ? 100 * Math.sqrt(scale) : 80 * Math.sqrt(scale),
+      borderRadius: isTablet ? 50 * Math.sqrt(scale) : 40 * Math.sqrt(scale),
       backgroundColor: theme.background,
       justifyContent: 'center',
       alignItems: 'center',
@@ -65,48 +65,42 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       borderColor: theme.border,
     },
     avatarLetter: {
-      fontSize: isTablet ? 40 : 32,
+      fontSize: isTablet ? 40 * scale : 32 * scale,
       fontWeight: 'bold',
       color: theme.text,
     },
     username: {
-      fontSize: isTablet ? 22 : 18,
-      fontWeight: 'bold',
-      marginTop: isTablet ? 10 : 8,
-      color: theme.text,
+      marginTop: isTablet ? 10 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
     },
-    activeStreak: {
-      fontSize: isTablet ? 16 : 14,
-      color: theme.secondText,
-      marginTop: 4,
+    streak: {
+      marginTop: 4 * Math.sqrt(scale),
     },
     actions: {
       flexDirection: 'row',
-      marginTop: isTablet ? 16 : 12,
+      marginTop: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
     },
     editButton: {
       flexDirection: 'row',
       backgroundColor: theme.primary,
-      paddingVertical: 8,
-      paddingHorizontal: isTablet ? 20 : 16,
-      borderRadius: 20,
+      paddingVertical: 8 * Math.sqrt(scale),
+      paddingHorizontal: isTablet ? 20 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
+      borderRadius: 20 * Math.sqrt(scale),
       alignItems: 'center',
-      marginRight: 8,
+      marginRight: 8 * Math.sqrt(scale),
     },
     editText: {
       color: theme.text,
-      marginLeft: 4,
+      marginLeft: 4 * Math.sqrt(scale),
       fontWeight: '500',
-      fontSize: isTablet ? 16 : 14,
     },
     logoutButton: {
       backgroundColor: theme.background,
-      padding: isTablet ? 10 : 8,
-      borderRadius: 20,
+      padding: isTablet ? 10 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
+      borderRadius: 20 * Math.sqrt(scale),
       alignItems: 'center',
       justifyContent: 'center',
     },
-  });
+  }));
 
   return (
     <View style={styles.container}>
@@ -124,9 +118,19 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           )}
         </View>
 
-        <Text style={styles.username}>{username}</Text>
-        <Text style={styles.activeStreak}>{getStreakText(streak)}</Text>
-
+        <AccessibleText 
+          variant="header2" 
+          style={styles.username}
+        >
+          {username}
+        </AccessibleText>
+        
+        <AccessibleText 
+          variant="caption" 
+          style={styles.streak}
+        >
+          {getStreakText(streak)}
+        </AccessibleText>
       </View>
     </View>
   );

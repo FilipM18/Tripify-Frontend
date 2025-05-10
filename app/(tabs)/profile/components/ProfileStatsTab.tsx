@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { View, ScrollView, TouchableOpacity } from 'react-native';
 import { apiService } from '@/utils/api';
 import { Trip } from '@/utils/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/app/ThemeContext';
-import { lightTheme, darkTheme } from '@/app/theme';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
+import { AccessibleText } from '@/components/AccessibleText';
+import { useScaledStyles } from '@/utils/accessibilityUtils';
 
 function estimateCalories(type: string, distanceKm: number): number {
   switch (type) {
@@ -20,7 +21,6 @@ function estimateCalories(type: string, distanceKm: number): number {
   }
 }
 
-// Time period options
 const TIME_PERIODS = [
   { id: 'all', label: 'Všetko' },
   { id: 'day', label: 'Posledný deň' },
@@ -28,7 +28,6 @@ const TIME_PERIODS = [
   { id: 'month', label: 'Posledný mesiac' }
 ];
 
-// Exercise type options
 const EXERCISE_TYPES = [
   { id: 'all', label: 'Všetky' },
   { id: 'running', label: 'Beh' },
@@ -44,9 +43,9 @@ const ProfileStatsTab: React.FC = () => {
   const [totalTrips, setTotalTrips] = useState(0);
   const [selectedTimePeriod, setSelectedTimePeriod] = useState('all');
   const [selectedExerciseType, setSelectedExerciseType] = useState('all');
-  const [activeTab, setActiveTab] = useState('stats'); // 'stats' or 'filters'
-  const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const [activeTab, setActiveTab] = useState('stats'); // 'stats' alebo 'filters'
+  const { theme } = useTheme();
+  const { isTablet } = useScreenDimensions();
 
   useEffect(() => {
     fetchTrips();
@@ -70,7 +69,6 @@ const ProfileStatsTab: React.FC = () => {
   const applyFilters = () => {
     let filtered = [...trips];
 
-    // Apply time period filter
     if (selectedTimePeriod !== 'all') {
       const now = new Date();
       let cutoffDate = new Date();
@@ -89,7 +87,6 @@ const ProfileStatsTab: React.FC = () => {
       });
     }
 
-    // Apply exercise type filter
     if (selectedExerciseType !== 'all') {
       filtered = filtered.filter(trip => {
         const tripType = (trip.type || '').toLowerCase();
@@ -111,20 +108,29 @@ const ProfileStatsTab: React.FC = () => {
     setTotalCalories(calories);
   };
 
-  const styles = StyleSheet.create({
+  const getFilterOptionAccessibilityLabel = (option: any, type: string, isSelected: boolean) => {
+    const selectedText = isSelected ? 'vybrané' : '';
+    if (type === 'time') {
+      return `${option.label} ${selectedText}`;
+    } else {
+      return `${option.label} aktivity ${selectedText}`;
+    }
+  };
+
+  const styles = useScaledStyles((scale) => ({
     container: {
-      padding: 18,
-      paddingTop: 24,
+      padding: isTablet ? 24 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
+      paddingTop: isTablet ? 32 * Math.sqrt(scale) : 24 * Math.sqrt(scale),
     },
     card: {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: theme.background,
-      borderRadius: 24,
+      borderRadius: isTablet ? 28 * Math.sqrt(scale) : 24 * Math.sqrt(scale),
       borderWidth: 1.5,
       borderColor: theme.border,
-      padding: 18,
-      marginBottom: 18,
+      padding: isTablet ? 24 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
+      marginBottom: isTablet ? 24 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
       shadowColor: theme.shadow,
       shadowOpacity: 0.06,
       shadowRadius: 8,
@@ -132,73 +138,52 @@ const ProfileStatsTab: React.FC = () => {
       elevation: 2, 
     },
     iconCircle: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
+      width: isTablet ? 60 * Math.sqrt(scale) : 48 * Math.sqrt(scale),
+      height: isTablet ? 60 * Math.sqrt(scale) : 48 * Math.sqrt(scale),
+      borderRadius: isTablet ? 30 * Math.sqrt(scale) : 24 * Math.sqrt(scale),
       backgroundColor: theme.secondBackground,
       justifyContent: 'center',
       alignItems: 'center',
-      marginRight: 18,
+      marginRight: isTablet ? 24 * Math.sqrt(scale) : 18 * Math.sqrt(scale),
     },
     cardDetails: {
       flex: 1,
       justifyContent: 'center',
     },
-    statLabel: {
-      fontSize: 15,
-      color: theme.thirdText,
-      marginBottom: 4,
-      fontWeight: '500',
-    },
-    statValue: {
-      fontSize: 22,
-      fontWeight: 'bold',
-      color: theme.text,
-    },
     tabsContainer: {
       flexDirection: 'row',
-      marginBottom: 20,
-      borderRadius: 12,
+      marginBottom: isTablet ? 26 * Math.sqrt(scale) : 20 * Math.sqrt(scale),
+      borderRadius: isTablet ? 16 * Math.sqrt(scale) : 12 * Math.sqrt(scale),
       backgroundColor: theme.secondBackground,
-      padding: 4,
+      padding: isTablet ? 6 * Math.sqrt(scale) : 4 * Math.sqrt(scale),
     },
     tab: {
       flex: 1,
-      paddingVertical: 10,
+      paddingVertical: isTablet ? 14 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
       alignItems: 'center',
-      borderRadius: 8,
+      borderRadius: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
     },
     activeTab: {
       backgroundColor: theme.background,
     },
-    tabText: {
-      color: theme.thirdText,
-      fontWeight: '500',
-    },
-    activeTabText: {
-      color: theme.text,
-      fontWeight: '600',
-    },
     filterSection: {
-      marginBottom: 20,
+      marginBottom: isTablet ? 26 * Math.sqrt(scale) : 20 * Math.sqrt(scale),
     },
-    filterTitle: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: theme.text,
-      marginBottom: 10,
+    filterSectionTitle: {
+      marginBottom: isTablet ? 14 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
+      fontSize: isTablet ? 18 * scale : 16 * scale,
     },
     filterOptions: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      marginBottom: 10,
+      marginBottom: isTablet ? 14 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
     },
     filterOption: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
-      marginRight: 8,
-      marginBottom: 8,
+      paddingHorizontal: isTablet ? 20 * Math.sqrt(scale) : 16 * Math.sqrt(scale),
+      paddingVertical: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
+      borderRadius: isTablet ? 24 * Math.sqrt(scale) : 20 * Math.sqrt(scale),
+      marginRight: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
+      marginBottom: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
       backgroundColor: theme.secondBackground,
       borderWidth: 1,
       borderColor: theme.border,
@@ -208,42 +193,49 @@ const ProfileStatsTab: React.FC = () => {
       borderColor: theme.primary,
     },
     filterOptionText: {
-      color: theme.thirdText,
       fontWeight: '500',
+      fontSize: isTablet ? 16 * scale : 14 * scale,
     },
-    selectedFilterOptionText: {
-      color: '#FFFFFF',
-      fontWeight: '600',
-    },
-  });
+  }));
 
   const renderStatsTab = () => (
     <>
-      <View style={styles.card}>
+      <View 
+        style={styles.card}
+        accessibilityLabel={`Počet výletov: ${totalTrips}`}
+      >
         <View style={styles.iconCircle}>
-          <Ionicons name="map-outline" size={28} color={theme.primary} />
+          <Ionicons name="map-outline" size={isTablet ? 32 : 28} color={theme.primary} />
         </View>
         <View style={styles.cardDetails}>
-          <Text style={styles.statLabel}>Počet výletov</Text>
-          <Text style={styles.statValue}>{totalTrips}</Text>
+          <AccessibleText variant="caption">Počet výletov</AccessibleText>
+          <AccessibleText variant="header2">{totalTrips}</AccessibleText>
         </View>
       </View>
-      <View style={styles.card}>
+      
+      <View 
+        style={styles.card}
+        accessibilityLabel={`Prejdené kilometre: ${Number(totalKm).toFixed(2)} km`}
+      >
         <View style={styles.iconCircle}>
-          <Ionicons name="walk-outline" size={28} color={theme.primary}/>
+          <Ionicons name="walk-outline" size={isTablet ? 32 : 28} color={theme.primary}/>
         </View>
         <View style={styles.cardDetails}>
-          <Text style={styles.statLabel}>Prejdené km</Text>
-          <Text style={styles.statValue}>{Number(totalKm).toFixed(2)} km</Text>
+          <AccessibleText variant="caption">Prejdené km</AccessibleText>
+          <AccessibleText variant="header2">{Number(totalKm).toFixed(2)} km</AccessibleText>
         </View>
       </View>
-      <View style={styles.card}>
+      
+      <View 
+        style={styles.card}
+        accessibilityLabel={`Spálené kalórie: ${totalCalories}`}
+      >
         <View style={styles.iconCircle}>
-          <Ionicons name="flame-outline" size={28} color={theme.primary} />
+          <Ionicons name="flame-outline" size={isTablet ? 32 : 28} color={theme.primary} />
         </View>
         <View style={styles.cardDetails}>
-          <Text style={styles.statLabel}>Spálené kalórie</Text>
-          <Text style={styles.statValue}>{totalCalories}</Text>
+          <AccessibleText variant="caption">Spálené kalórie</AccessibleText>
+          <AccessibleText variant="header2">{totalCalories}</AccessibleText>
         </View>
       </View>
     </>
@@ -252,8 +244,18 @@ const ProfileStatsTab: React.FC = () => {
   const renderFiltersTab = () => (
     <>
       <View style={styles.filterSection}>
-        <Text style={styles.filterTitle}>Časové obdobie</Text>
-        <View style={styles.filterOptions}>
+        <AccessibleText 
+          variant="bodyBold" 
+          style={styles.filterSectionTitle}
+          accessibilityLabel="Sekcia filtrov pre časové obdobie"
+        >
+          Časové obdobie
+        </AccessibleText>
+        
+        <View 
+          style={styles.filterOptions}
+          accessibilityLabel="Možnosti časového obdobia"
+        >
           {TIME_PERIODS.map(period => (
             <TouchableOpacity
               key={period.id}
@@ -262,23 +264,41 @@ const ProfileStatsTab: React.FC = () => {
                 selectedTimePeriod === period.id && styles.selectedFilterOption
               ]}
               onPress={() => setSelectedTimePeriod(period.id)}
+              accessibilityLabel={getFilterOptionAccessibilityLabel(
+                period, 'time', selectedTimePeriod === period.id
+              )}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selectedTimePeriod === period.id }}
+              accessibilityHint={`Filtrovať výlety za ${period.label.toLowerCase()}`}
             >
-              <Text
+              <AccessibleText 
+                variant="body"
+                color={selectedTimePeriod === period.id ? '#FFFFFF' : theme.thirdText}
                 style={[
                   styles.filterOptionText,
-                  selectedTimePeriod === period.id && styles.selectedFilterOptionText
+                  { fontWeight: selectedTimePeriod === period.id ? 'bold' : '500' }
                 ]}
               >
                 {period.label}
-              </Text>
+              </AccessibleText>
             </TouchableOpacity>
           ))}
         </View>
       </View>
       
       <View style={styles.filterSection}>
-        <Text style={styles.filterTitle}>Typ aktivity</Text>
-        <View style={styles.filterOptions}>
+        <AccessibleText 
+          variant="bodyBold" 
+          style={styles.filterSectionTitle}
+          accessibilityLabel="Sekcia filtrov pre typ aktivity"
+        >
+          Typ aktivity
+        </AccessibleText>
+        
+        <View 
+          style={styles.filterOptions}
+          accessibilityLabel="Možnosti typov aktivít"
+        >
           {EXERCISE_TYPES.map(type => (
             <TouchableOpacity
               key={type.id}
@@ -287,15 +307,23 @@ const ProfileStatsTab: React.FC = () => {
                 selectedExerciseType === type.id && styles.selectedFilterOption
               ]}
               onPress={() => setSelectedExerciseType(type.id)}
+              accessibilityLabel={getFilterOptionAccessibilityLabel(
+                type, 'exercise', selectedExerciseType === type.id
+              )}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selectedExerciseType === type.id }}
+              accessibilityHint={`Filtrovať aktivity typu ${type.label.toLowerCase()}`}
             >
-              <Text
+              <AccessibleText 
+                variant="body"
+                color={selectedExerciseType === type.id ? '#FFFFFF' : theme.thirdText}
                 style={[
                   styles.filterOptionText,
-                  selectedExerciseType === type.id && styles.selectedFilterOptionText
+                  { fontWeight: selectedExerciseType === type.id ? 'bold' : '500' }
                 ]}
               >
                 {type.label}
-              </Text>
+              </AccessibleText>
             </TouchableOpacity>
           ))}
         </View>
@@ -306,23 +334,47 @@ const ProfileStatsTab: React.FC = () => {
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.tabsContainer}>
+    <ScrollView 
+      contentContainerStyle={styles.container}
+      accessibilityLabel="Štatistiky aktivít"
+    >
+      <View 
+        style={styles.tabsContainer} 
+        accessibilityRole="tablist"
+        accessibilityLabel="Prepínač medzi štatistikami a filtrami"
+      >
         <TouchableOpacity
           style={[styles.tab, activeTab === 'stats' && styles.activeTab]}
           onPress={() => setActiveTab('stats')}
+          accessibilityLabel="Štatistiky"
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'stats' }}
+          accessibilityHint="Zobrazí základné štatistiky aktivít"
         >
-          <Text style={[styles.tabText, activeTab === 'stats' && styles.activeTabText]}>
+          <AccessibleText 
+            variant="body"
+            color={activeTab === 'stats' ? theme.text : theme.thirdText}
+            style={{ fontWeight: activeTab === 'stats' ? 'bold' : 'normal' }}
+          >
             Štatistiky
-          </Text>
+          </AccessibleText>
         </TouchableOpacity>
+        
         <TouchableOpacity
           style={[styles.tab, activeTab === 'filters' && styles.activeTab]}
           onPress={() => setActiveTab('filters')}
+          accessibilityLabel="Filtre"
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'filters' }}
+          accessibilityHint="Zobrazí filtrovanie podľa obdobia a typu aktivity"
         >
-          <Text style={[styles.tabText, activeTab === 'filters' && styles.activeTabText]}>
+          <AccessibleText
+            variant="body"
+            color={activeTab === 'filters' ? theme.text : theme.thirdText}
+            style={{ fontWeight: activeTab === 'filters' ? 'bold' : 'normal' }}
+          >
             Filtre
-          </Text>
+          </AccessibleText>
         </TouchableOpacity>
       </View>
       

@@ -11,10 +11,10 @@ import { UserProfile } from '@/utils/types';
 import { API_URL } from '@/utils/constants';
 import ProfileCalendarTab from './components/ProfileCalendarTab';
 import ProfileStatsTab from './components/ProfileStatsTab';
-import { Text } from 'react-native';
 import { useTheme } from '@/app/ThemeContext';
-import { lightTheme, darkTheme } from '@/app/theme';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
+import { AccessibleText } from '@/components/AccessibleText';
+import { useScaledStyles } from '@/utils/accessibilityUtils';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -22,9 +22,31 @@ export default function ProfileScreen() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState('Kalendár');
   const [activityStreak, setActivityStreak] = useState(0);
-  const { isDarkMode } = useTheme();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme, fontScale } = useTheme();
   const { isTablet } = useScreenDimensions();
+
+  const styles = useScaledStyles((scale) => ({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.background,
+    },
+    tabContent: {
+      flex: 1,
+      padding: 16 * Math.sqrt(scale), 
+    },
+    info: {
+      textAlign: 'center',
+      color: theme.secondText,
+      marginTop: 16 * Math.sqrt(scale),
+      fontSize: 16 * scale, 
+    },
+  }));
 
   useEffect(() => {
     fetchUserProfile();
@@ -73,32 +95,13 @@ export default function ProfileScreen() {
     setActiveTab(tabName);
   };
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: theme.background,
-    },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: theme.card,
-    },
-    tabContent: {
-      flex: 1,
-      padding: 16,
-    },
-    info: {
-      textAlign: 'center',
-      color: theme.secondText,
-      marginTop: 16,
-    },
-  });
-
-  if (loading) {
+  if (loading || !userProfile) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.primary}/>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <AccessibleText variant="body" style={{ marginTop: 16 * Math.sqrt(fontScale) }}>
+          Načítavam...
+        </AccessibleText>
       </View>
     );
   }
@@ -123,12 +126,14 @@ export default function ProfileScreen() {
             onTabChange={handleTabChange}
           />
           
-         
           <View style={styles.tabContent}>
             {activeTab === 'Kalendár' && <ProfileCalendarTab />}
             {activeTab === 'Štatistiky' && <ProfileStatsTab />}
-            {activeTab === 'Informácie' && (<Text style={styles.info}>Osobné informácie...</Text>)}
-
+            {activeTab === 'Informácie' && (
+              <AccessibleText variant="body" style={{ textAlign: 'center' }}>
+                Osobné informácie...
+              </AccessibleText>
+            )}
           </View>
         </>
       )}
