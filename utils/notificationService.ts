@@ -27,7 +27,7 @@ export async function setupNotifications(): Promise<() => void> {
       const { type, contentType, contentId } = remoteMessage.data;
       
       if (type === 'like' && contentType === 'trip' && contentId) {
-        router.push(`/home/trip/TripDetail?tripId=${contentId}`);
+        router.push(`/(tabs)/home/trip/TripDetail?tripId=${contentId}`);
       }
     }
   });
@@ -40,7 +40,7 @@ export async function setupNotifications(): Promise<() => void> {
         const { type, contentType, contentId } = remoteMessage.data;
         
         if (type === 'like' && contentType === 'trip' && contentId) {
-          router.push(`/home/trip/TripDetail?tripId=${contentId}`);
+          router.push(`/(tabs)/home/trip/TripDetail?tripId=${contentId}`);
         }
       }
     }
