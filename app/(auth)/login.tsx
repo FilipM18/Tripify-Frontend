@@ -3,12 +3,15 @@ import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert } fr
 import { useRouter } from 'expo-router';
 import { saveToken } from '@/utils/auth';
 import { login } from '@/utils/api';
+import { useTheme } from '../ThemeContext';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { theme, visionMode } = useTheme();
+
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -35,11 +38,20 @@ export default function LoginScreen() {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: theme.background },
+    text: { color: theme.secondText, fontSize: 16, marginBottom: 12 },
+    title: { fontSize: 28, fontWeight: 'bold', marginBottom: 24, textAlign: 'center', color: theme.text },
+    input: { borderWidth: 1, borderColor: theme.border, borderRadius: 8, padding: 12, marginBottom: 12, backgroundColor: theme.inputBackground, color: theme.text },
+    button: { backgroundColor: theme.primary, borderRadius: 8, padding: 12, marginBottom: 12 },
+    switchText: { color: theme.primary, marginTop: 16, textAlign: 'center' }
+  });
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Prihlásenie</Text>
-      <TextInput placeholder="Email" value={email} onChangeText={setEmail} style={styles.input} keyboardType="email-address" />
-      <TextInput placeholder="Heslo" value={password} onChangeText={setPassword} style={styles.input} secureTextEntry />
+      <TextInput placeholder="Email" placeholderTextColor={theme.thirdText} value={email} onChangeText={setEmail} style={styles.input} keyboardType="email-address" />
+      <TextInput placeholder="Heslo" placeholderTextColor={theme.thirdText} value={password} onChangeText={setPassword} style={styles.input} secureTextEntry />
       <Button title={loading ? "Prihlasujem..." : "Prihlásiť sa"} onPress={handleLogin} disabled={loading} />
       <TouchableOpacity onPress={() => router.replace('/(auth)/signup')}>
         <Text style={styles.switchText}>Ešte nemáš účet? Registruj sa!</Text>
@@ -47,10 +59,3 @@ export default function LoginScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24 },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 24, textAlign: 'center' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 12 },
-  switchText: { color: '#4CAF50', marginTop: 16, textAlign: 'center' }
-});

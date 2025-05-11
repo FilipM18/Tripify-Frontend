@@ -1,3 +1,4 @@
+// app/_layout.tsx
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { getToken, removeToken } from '../utils/auth';
@@ -5,35 +6,46 @@ import { verifyToken } from '@/utils/api';
 import { ThemeProvider } from '../app/ThemeContext';
 import React from 'react';
 import { WebSocketProvider } from '@/utils/WebSocketContext';
-import { Text, View, ActivityIndicator } from 'react-native';
+import { Text, View, ActivityIndicator, Platform } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import * as NavigationBar from 'expo-navigation-bar'; 
 
 export default function RootLayout() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    const setupNavigationBar = async () => {
+      if (Platform.OS === 'android') {
+        await NavigationBar.setBackgroundColorAsync('#121212');
+        await NavigationBar.setButtonStyleAsync('light');
+      }
+    };
+
+    setupNavigationBar();
+
     const checkAuth = async () => {
       try {
         const token = await getToken();
         if (!token) {
-          console.log("No token found");
+          //console.log("No token found");
           setAuthenticated(false);
           return;
         }
         
-        console.log("Token found, verifying...");
+        //console.log("Token found, verifying...");
         const data = await verifyToken(token);
         
         if (data.success) {
-          console.log("Token valid");
+          //console.log("Token valid");
           setAuthenticated(true);
         } else {
-          console.log("Token invalid");
+          //console.log("Token invalid");
           await removeToken();
           setAuthenticated(false);
         }
       } catch (error) {
-        console.error("Auth check error:", error);
+        //console.error("Auth check error:", error);
         await removeToken();
         setAuthenticated(false);
       } finally {
@@ -56,7 +68,13 @@ export default function RootLayout() {
   return (
     <WebSocketProvider>
       <ThemeProvider>
-        <Stack screenOptions={{ headerShown: false }}>
+        <StatusBar style="light" backgroundColor="#18191A" translucent={false} />
+        <Stack 
+          screenOptions={{ 
+            headerShown: false,
+            navigationBarColor: '#121212',
+          }}
+        >
           {authenticated ? (
             <Stack.Screen name="(tabs)" />
           ) : (

@@ -1,12 +1,13 @@
+// app/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTheme } from '../ThemeContext';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 import { useScaledStyles } from '@/utils/accessibilityUtils';
 
 export default function TabLayout() {
-  const { theme, fontScale } = useTheme();
+  const { theme, fontScale, isDarkMode } = useTheme();
   const { isTablet } = useScreenDimensions();
   
   const getIconSize = () => {
@@ -22,8 +23,7 @@ export default function TabLayout() {
   const styles = useScaledStyles((scale) => ({
     tabBar: {
       backgroundColor: theme.background,
-      borderTopWidth: 1,
-      borderTopColor: theme.border,
+      borderTopWidth: 0, 
       height: isTablet ? 75 * Math.sqrt(scale) : 65 * Math.sqrt(scale),
       paddingBottom: isTablet ? 12 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
       paddingTop: isTablet ? 8 * Math.sqrt(scale) : 5 * Math.sqrt(scale),

@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { saveToken } from '@/utils/auth';
 import { register } from '@/utils/api';
+import { useTheme } from '../ThemeContext';
 
 export default function SignupScreen() {
   const [username, setUsername] = useState('');
@@ -14,6 +15,8 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const { theme, visionMode } = useTheme();
+
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -76,14 +79,23 @@ export default function SignupScreen() {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: theme.background },
+    text: { color: theme.secondText, fontSize: 16, marginBottom: 12 },
+    title: { fontSize: 28, fontWeight: 'bold', marginBottom: 24, textAlign: 'center', color: theme.text },
+    input: { borderWidth: 1, borderColor: theme.border, borderRadius: 8, padding: 12, marginBottom: 12, backgroundColor: theme.inputBackground, color: theme.text },
+    imagePicker: { alignItems: 'center', marginBottom: 18 },
+    switchText: { color: theme.primary, marginTop: 16, textAlign: 'center' }
+  });
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Registrácia</Text>
-      <TextInput placeholder="Username" value={username} onChangeText={setUsername} style={styles.input} />
-      <TextInput placeholder="Email" value={email} onChangeText={setEmail} style={styles.input} keyboardType="email-address" />
-      <TextInput placeholder="Tel. číslo" value={phoneNumber} onChangeText={setPhoneNumber} style={styles.input} keyboardType="phone-pad" />
-      <TextInput placeholder="Heslo" value={password} onChangeText={setPassword} style={styles.input} secureTextEntry />
-      <TextInput placeholder="Zopakuj heslo" value={password2} onChangeText={setPassword2} style={styles.input} secureTextEntry />
+      <TextInput placeholder="Username" placeholderTextColor={theme.thirdText} value={username} onChangeText={setUsername} style={styles.input} />
+      <TextInput placeholder="Email" value={email}placeholderTextColor={theme.thirdText} onChangeText={setEmail} style={styles.input} keyboardType="email-address" />
+      <TextInput placeholder="Tel. číslo" value={phoneNumber} placeholderTextColor={theme.thirdText} onChangeText={setPhoneNumber} style={styles.input} keyboardType="phone-pad" />
+      <TextInput placeholder="Heslo" value={password} placeholderTextColor={theme.thirdText} onChangeText={setPassword} style={styles.input} secureTextEntry />
+      <TextInput placeholder="Zopakuj heslo" value={password2} placeholderTextColor={theme.thirdText} onChangeText={setPassword2} style={styles.input} secureTextEntry />
       <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
         <Text>Vyber porfilovú fotku</Text>
         {photo && <Image source={{ uri: photo.uri }} style={{ width: 60, height: 60, borderRadius: 30 }} />}
@@ -95,11 +107,3 @@ export default function SignupScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24 },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 24, textAlign: 'center' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 12 },
-  imagePicker: { alignItems: 'center', marginBottom: 18 },
-  switchText: { color: '#4CAF50', marginTop: 16, textAlign: 'center' }
-});
