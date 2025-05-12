@@ -22,6 +22,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const { isTablet } = useScreenDimensions();
 
   const fullPhotoUrl = photoUrl ? `${API_URL}${photoUrl}` : null;
+  console.log('fullPhotoUrl', photoUrl);
 
   const getStreakText = (count: number) => {
     if (count === 0) return "Active streak: 0 dní";

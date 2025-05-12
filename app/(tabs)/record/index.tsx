@@ -14,7 +14,29 @@ import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 export default function RecordTripScreen() {
   const { theme } = useTheme();
   const { isTablet, width, height } = useScreenDimensions();
-
+  
+  const {
+    route,
+    currentLocation,
+    totalDistance,
+    pace,
+    duration,
+    isRecording,
+    photos,
+    selectedActivity,
+    showSaveModal,
+    uploadInProgress,
+    startRecording,
+    stopRecording,
+    takePhoto,
+    setSelectedActivity,
+    saveTripWithDetails,
+    cancelSaveModal,
+    elevationGain,
+    stepCount,
+    upwardSteps
+  } = useTrip();
+  
   const styles = useScaledStyles((scale) => ({
     container: {
       flex: 1,
@@ -37,25 +59,6 @@ export default function RecordTripScreen() {
     },
   }));
 
-  const {
-    route,
-    currentLocation,
-    totalDistance,
-    pace,
-    duration,
-    isRecording,
-    photos,
-    selectedActivity,
-    showSaveModal,
-    uploadInProgress,
-    startRecording,
-    stopRecording,
-    takePhoto,
-    setSelectedActivity,
-    saveTripWithDetails,
-    cancelSaveModal
-  } = useTrip();
-
   //tablet skuska mozno netreba rovnako ako na mobile
   if (isTablet) {
     return (
@@ -73,6 +76,7 @@ export default function RecordTripScreen() {
             duration={duration}
             distance={totalDistance}
             pace={pace}
+            elevationGain={elevationGain}
           />
 
           <ActivityPicker 
@@ -119,6 +123,7 @@ export default function RecordTripScreen() {
         duration={duration}
         distance={totalDistance}
         pace={pace}
+        elevationGain={elevationGain}
       />
 
       <ActivityPicker 

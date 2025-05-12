@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, FlatList, Image, TouchableOpacity, Modal } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, FlatList, Image, TouchableOpacity, Modal, Switch, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { API_URL } from '../../../utils/constants';
@@ -8,6 +8,7 @@ import { useTheme } from '@/app/ThemeContext';
 import { useScreenDimensions } from '@/hooks/useScreenDimensions';
 import { AccessibleText } from '@/components/AccessibleText';
 import { useScaledStyles } from '@/utils/accessibilityUtils';
+import { Gyroscope } from 'expo-sensors';
 
 export default function MemoryClusterScreen() {
   const router = useRouter();
@@ -17,8 +18,68 @@ export default function MemoryClusterScreen() {
   const { isTablet, width } = useScreenDimensions();
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoLocation | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  
+  const [gyroEnabled, setGyroEnabled] = useState(false);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const subscriptionRef = useRef<any>(null);
+  const cooldownRef = useRef(false);
+
+  useEffect(() => {
+    if (gyroEnabled && modalVisible) {
+      console.log('Starting gyroscope for photo navigation...');
+      Gyroscope.setUpdateInterval(200);
+      
+      subscriptionRef.current = Gyroscope.addListener(({ y }) => {
+        console.log('Gyro Y value:', y);
+        
+        if (!cooldownRef.current) {
+          if (y > 0.5) {
+            console.log('Tilting right - next photo');
+            setCurrentPhotoIndex(prevIndex => {
+              const newIndex = prevIndex < photos.length - 1 ? prevIndex + 1 : prevIndex;
+              if (newIndex !== prevIndex) {
+                cooldownRef.current = true;
+                setTimeout(() => { cooldownRef.current = false; }, 500);
+              }
+              return newIndex;
+            });
+          } else if (y < -0.5) {
+            console.log('Tilting left - previous photo');
+            setCurrentPhotoIndex(prevIndex => {
+              const newIndex = prevIndex > 0 ? prevIndex - 1 : prevIndex;
+              if (newIndex !== prevIndex) {
+                cooldownRef.current = true;
+                setTimeout(() => { cooldownRef.current = false; }, 500);
+              }
+              return newIndex;
+            });
+          }
+        }
+      });
+      
+      return () => {
+        if (subscriptionRef.current) {
+          subscriptionRef.current.remove();
+          subscriptionRef.current = null;
+        }
+      };
+    } else {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.remove();
+        subscriptionRef.current = null;
+      }
+    }
+  }, [gyroEnabled, modalVisible, photos.length]);
+
+  useEffect(() => {
+    if (modalVisible && photos[currentPhotoIndex]) {
+      setSelectedPhoto(photos[currentPhotoIndex]);
+    }
+  }, [currentPhotoIndex, modalVisible]);
 
   const handlePhotoPress = (photo: PhotoLocation) => {
+    const index = photos.findIndex(p => p.id === photo.id);
+    setCurrentPhotoIndex(index);
     setSelectedPhoto(photo);
     setModalVisible(true);
   };
@@ -26,6 +87,11 @@ export default function MemoryClusterScreen() {
   const closeModal = () => {
     setModalVisible(false);
     setSelectedPhoto(null);
+    setGyroEnabled(false);
+    if (subscriptionRef.current) {
+      subscriptionRef.current.remove();
+      subscriptionRef.current = null;
+    }
   };
   
   const formatDate = (dateString: string) => {
@@ -128,6 +194,51 @@ export default function MemoryClusterScreen() {
       fontWeight: 'bold',
       fontSize: isTablet ? 16 * scale : 14 * scale,
     },
+    gyroControl: {
+      position: 'absolute',
+      bottom: isTablet ? 100 * Math.sqrt(scale) : 80 * Math.sqrt(scale),
+      alignSelf: 'center',
+      backgroundColor: gyroEnabled ? theme.primary : theme.secondBackground,
+      borderRadius: 30 * Math.sqrt(scale),
+      padding: isTablet ? 15 * Math.sqrt(scale) : 10 * Math.sqrt(scale),
+      flexDirection: 'row',
+      alignItems: 'center',
+      elevation: 4,
+      shadowColor: theme.shadow,
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      shadowOffset: { width: 0, height: 2 },
+    },
+    gyroText: {
+      color: gyroEnabled ? theme.card : theme.text,
+      marginRight: 10 * Math.sqrt(scale),
+      fontSize: isTablet ? 16 * scale : 14 * scale,
+      fontWeight: '600',
+    },
+    photoCounter: {
+      position: 'absolute',
+      top: isTablet ? 100 * Math.sqrt(scale) : 80 * Math.sqrt(scale),
+      alignSelf: 'center',
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      padding: isTablet ? 10 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
+      borderRadius: 20 * Math.sqrt(scale),
+    },
+    photoCounterText: {
+      color: 'white',
+      fontSize: isTablet ? 16 * scale : 14 * scale,
+    },
+    gyroIndicator: {
+      position: 'absolute',
+      bottom: isTablet ? 160 * Math.sqrt(scale) : 140 * Math.sqrt(scale),
+      alignSelf: 'center',
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      padding: isTablet ? 10 * Math.sqrt(scale) : 8 * Math.sqrt(scale),
+      borderRadius: 10 * Math.sqrt(scale),
+    },
+    gyroIndicatorText: {
+      color: 'white',
+      fontSize: isTablet ? 14 * scale : 12 * scale,
+    },
   }));
 
   return (
@@ -190,6 +301,12 @@ export default function MemoryClusterScreen() {
               <Ionicons name="close" size={24} color={theme.card} />
             </TouchableOpacity>
             
+            <View style={styles.photoCounter}>
+              <Text style={styles.photoCounterText}>
+                {currentPhotoIndex + 1} / {photos.length}
+              </Text>
+            </View>
+            
             {selectedPhoto && (
               <View 
                 style={styles.photoContainer}
@@ -241,6 +358,26 @@ export default function MemoryClusterScreen() {
                     </AccessibleText>
                   </TouchableOpacity>
                 </View>
+              </View>
+            )}
+            
+            <View style={styles.gyroControl}>
+              <Text style={styles.gyroText}>
+                {gyroEnabled ? 'Gyroskop Zapnutý' : 'Gyroskop'}
+              </Text>
+              <Switch 
+                value={gyroEnabled}
+                onValueChange={setGyroEnabled}
+                trackColor={{ false: "#767577", true: theme.secondary }}
+                thumbColor={gyroEnabled ? theme.card : "#f4f3f4"}
+              />
+            </View>
+          
+            {gyroEnabled && (
+              <View style={styles.gyroIndicator}>
+                <Text style={styles.gyroIndicatorText}>
+                  Nakloňte telefón doľava/doprava pre zmenu fotografie
+                </Text>
               </View>
             )}
           </View>

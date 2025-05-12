@@ -56,7 +56,6 @@ export const apiService = {
     if (!token) throw new Error('No authentication token found');
   
 
-  // Get user's trips
   const tripsData = await apiService.getUserTrips();
   //console.log('[getAllGeoPhotos] User trips:', tripsData);
 
@@ -86,7 +85,6 @@ export const apiService = {
     }
   }
 
-  // Filter valid coordinates
   const filtered = allPhotos.filter((photo: PhotoLocation) => 
     !isNaN(photo.latitude) && 
     !isNaN(photo.longitude)
@@ -123,7 +121,6 @@ export const apiService = {
     return handleResponse(response);
   },
 
-// Upload a photo to a trip
   uploadTripPhoto: async ({
     tripId,
     userId,
@@ -256,7 +253,6 @@ export async function apiRequest<T>(
   return response.json();
 }
 
-// Specific API calls
 
 export async function fetchTrip(tripId: string | number, token: string) {
   return apiRequest<{ success: boolean; trip: any; error?: string }>(
@@ -276,11 +272,10 @@ export async function login(email: string, password: string) {
 }
 
 export async function register(formData: FormData) {
-  // For multipart/form-data, use fetch directly, not apiRequest
+
   const response = await fetch(`${API_URL}/auth/register`, {
     method: 'POST',
     headers: {
-      // Do not set Content-Type; let fetch set it for FormData
     },
     body: formData,
   });
@@ -368,7 +363,6 @@ export const updateUserProfile = async (
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
-        // Don't set Content-Type for FormData
       },
       body: formData,
     });
@@ -479,6 +473,36 @@ export const getLikes = async (tripId: string | number, type: string) => {
     return data;
   } catch (error) {
     console.error('Get likes error:', error);
+    throw error;
+  }
+}
+
+export async function getUserProfile() {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    
+    const response = await fetch(`${API_URL}/auth/verify`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch user profile');
+    }
+    
+    const data = await response.json();
+    console.log('API Response for user profile:', data);
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
     throw error;
   }
 }

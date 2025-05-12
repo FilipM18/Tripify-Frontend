@@ -6,6 +6,7 @@ import { getToken } from '../utils/auth';
 import { Alert, AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import { useMotionElevation } from './useMotionElevation';
 
 export interface LocationCoordinates {
   latitude: number;
@@ -32,6 +33,9 @@ interface TripData {
   type: string;
   title?: string;
   info?: string;
+  elevationGain?: number;
+  stepCount?: number;
+  upwardSteps?: number;
 }
 
 interface PendingTrip {
@@ -42,7 +46,7 @@ interface PendingTrip {
 }
 
 const PENDING_TRIPS_KEY = 'pending_trips';
-const AUTO_SYNC_DELAY = 3000; // Delay before auto-syncing to avoid rapid attempts
+const AUTO_SYNC_DELAY = 3000;
 
 export function useTrip() {
   const [route, setRoute] = useState<LocationCoordinates[]>([]);
@@ -66,8 +70,16 @@ export function useTrip() {
   const timerInterval = useRef<any>(null);
   const appState = useRef(AppState.currentState);
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  const {
+    elevationGain,
+    startTracking: startElevationTracking,
+    stopTracking: stopElevationTracking,
+    resetElevation,
+    stepCount,
+    upwardSteps
+  } = useMotionElevation();
 
-  // IMPORTANT: Define uploadPhoto function before it's used in syncPendingTrips
   const uploadPhoto = async (photo: PhotoUpload, tripId: string): Promise<void> => {
     if (!userId) {
       throw new Error('User is not authenticated');
@@ -95,18 +107,15 @@ export function useTrip() {
     }
   };
 
-  // Memoize syncPendingTrips to avoid recreating it on each render
   const syncPendingTrips = useCallback(async () => {
     console.log('[syncPendingTrips] Function called');
     
-    // Check network state before proceeding
     const networkState = await NetInfo.fetch();
     if (!networkState.isConnected) {
       console.log('[syncPendingTrips] Device is currently offline. Sync aborted.');
       return;
     }
     
-    // Prevent concurrent sync operations
     if (isSyncing) {
       console.log('[syncPendingTrips] Sync already in progress. Skipping.');
       return;
@@ -130,25 +139,19 @@ export function useTrip() {
         return;
       }
       
-      // Don't show alert on automatic syncing
-      // Alert.alert('Syncing', `Syncing ${pendingTrips.length} pending trips...`);
-      
-      // Process each trip one by one
+
       const updatedPendingTrips: PendingTrip[] = [];
       
       for (const pendingTrip of pendingTrips) {
-        // Skip if already synced (has tripId and all photos uploaded)
         if (pendingTrip.tripId && pendingTrip.photos.every(p => p.uploaded)) {
           console.log(`[syncPendingTrips] Trip ${pendingTrip.tripId} already fully synced. Skipping.`);
           continue;
         }
         
         try {
-          // If this trip already has an ID, it was partially synced
           if (pendingTrip.tripId) {
             console.log(`[syncPendingTrips] Trip ${pendingTrip.tripId} partially synced. Uploading remaining photos.`);
-            
-            // Just upload remaining photos
+
             let allPhotosUploaded = true;
             
             for (const photo of pendingTrip.photos) {
@@ -162,12 +165,10 @@ export function useTrip() {
               }
             }
             
-            // If some photos failed, keep this trip in the pending list
             if (!allPhotosUploaded) {
               updatedPendingTrips.push(pendingTrip);
             }
           } else {
-            // Create the trip first
             console.log(`[syncPendingTrips] Creating new trip with transaction ID: ${pendingTrip.transactionId}`);
             const result = await apiService.createTrip(pendingTrip.tripData);
             
@@ -175,7 +176,6 @@ export function useTrip() {
               const tripId = result.tripId;
               pendingTrip.tripId = tripId;
               
-              // Upload photos one by one
               let allPhotosUploaded = true;
               
               for (const photo of pendingTrip.photos) {
@@ -187,12 +187,10 @@ export function useTrip() {
                 }
               }
               
-              // If some photos failed, keep this trip in the pending list
               if (!allPhotosUploaded) {
                 updatedPendingTrips.push(pendingTrip);
               }
             } else {
-              // If trip creation failed, keep in the pending list
               updatedPendingTrips.push(pendingTrip);
             }
           }
@@ -202,11 +200,9 @@ export function useTrip() {
         }
       }
       
-      // Update the pending trips list
       await AsyncStorage.setItem(PENDING_TRIPS_KEY, JSON.stringify(updatedPendingTrips));
       setHasPendingTrips(updatedPendingTrips.length > 0);
       
-      // Notify user only if they initiated the sync manually or if something was actually synced
       const syncedCount = pendingTrips.length - updatedPendingTrips.length;
       if (syncedCount > 0) {
         Alert.alert('Sync Complete', `Successfully synced ${syncedCount} trips.`);
@@ -218,31 +214,25 @@ export function useTrip() {
     } finally {
       setIsSyncing(false);
     }
-  }, [isSyncing, userId]); // Add all dependencies
+  }, [isSyncing, userId]);
 
-  // Enhanced network monitoring with automatic sync
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
       console.log('[NetworkState]', state.isConnected ? 'Connected' : 'Disconnected');
       
-      // Check current offline state before updating
       const wasOffline = isOffline;
       setIsOffline(!state.isConnected);
       
-      // When we reconnect to the internet, auto-sync pending trips
       if (wasOffline && state.isConnected) {
         console.log('[NetworkChange] Reconnected to internet, automatically syncing');
         
-        // Use a delay to avoid multiple rapid triggers
         if (syncTimeoutRef.current) {
           clearTimeout(syncTimeoutRef.current);
         }
         
         syncTimeoutRef.current = setTimeout(() => {
           console.log('[NetworkChange] Executing auto-sync after reconnect');
-          // No need to check for pending trips first - the syncPendingTrips function 
-          // will check internally and only proceed if there are pending trips
-          if (!isRecording) { // Only auto-sync if not recording
+          if (!isRecording) {
             syncPendingTrips();
           } else {
             console.log('[NetworkChange] Not auto-syncing because recording is in progress');
@@ -259,7 +249,6 @@ export function useTrip() {
     };
   }, [isOffline, isRecording, syncPendingTrips]);
 
-  // Auto-sync when app comes to foreground
   useEffect(() => {
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     
@@ -276,10 +265,8 @@ export function useTrip() {
       !isSyncing && 
       !isRecording
     ) {
-      // Auto-sync when app comes to foreground and we're not recording
       console.log('[AppState] App came to foreground, checking for pending trips');
-      
-      // Add a delay to prevent multiple triggers
+    
       if (syncTimeoutRef.current) {
         clearTimeout(syncTimeoutRef.current);
       }
@@ -292,19 +279,16 @@ export function useTrip() {
     appState.current = nextAppState;
   };
 
-  // Check for pending trips on mount and sync automatically if needed
   useEffect(() => {
     const initialCheck = async () => {
       console.log('[InitialCheck] Running initial pending trips check');
       const hasPending = await checkPendingTrips();
       
-      // Auto-sync on initial mount if there are pending trips and we're online
       const networkState = await NetInfo.fetch();
       console.log(`[InitialCheck] Network connected: ${networkState.isConnected}, Has pending: ${hasPending}`);
       
       if (networkState.isConnected && hasPending) {
         console.log('[InitialCheck] Triggering auto-sync');
-        // Use a delay to ensure all state is properly initialized
         setTimeout(() => {
           syncPendingTrips();
         }, AUTO_SYNC_DELAY);
@@ -320,11 +304,9 @@ export function useTrip() {
     };
   }, [syncPendingTrips]);
 
-  // Auto-sync when recording stops and there are pending trips
   useEffect(() => {
     if (!isRecording && hasPendingTrips && !isOffline && !isSyncing) {
       console.log('[RecordingStatus] Recording stopped, auto-syncing pending trips');
-      // Add a delay to ensure everything is saved properly
       setTimeout(() => {
         syncPendingTrips();
       }, AUTO_SYNC_DELAY);
@@ -491,16 +473,18 @@ export function useTrip() {
     setPace(0);
     setDuration(0);
     setStartTime(Date.now());
-    setIsRecording(true);
+    
     setPhotos([]);
+    startElevationTracking();
+    await startLocationTracking();
+
+    setIsRecording(true);
   };
 
-  // Generate a unique transaction ID for each trip
   const generateTransactionId = () => {
     return 'trip_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
   };
 
-  // Modified to show the title/description modal
   const stopRecording = async () => {
     if (uploadInProgress) {
       Alert.alert('Upload in Progress', 'Please wait for the current upload to complete.');
@@ -508,6 +492,7 @@ export function useTrip() {
     }
     
     setIsRecording(false);
+    stopElevationTracking();
     
     if (!userId) {
       Alert.alert('Error', 'User is not authenticated. Please log in again.');
@@ -519,17 +504,13 @@ export function useTrip() {
       return;
     }
     
-    // Show the save modal instead of immediately saving
     setShowSaveModal(true);
   };
 
-  // New function to handle saving the trip with title and description
-  // Fix for TypeScript errors in saveTripWithDetails function
   const saveTripWithDetails = async (title: string, description: string) => {
     setUploadInProgress(true);
     
     try {
-      // Make sure userId exists before proceeding
       if (!userId) {
         Alert.alert('Error', 'User is not authenticated. Please log in again.');
         setUploadInProgress(false);
@@ -538,7 +519,7 @@ export function useTrip() {
       }
 
       const tripData: TripData = {
-        userId: userId, // Now we're sure userId is a string, not null
+        userId: userId,
         startedAt: new Date(startTime!).toISOString(),
         endedAt: new Date().toISOString(),
         distanceKm: totalDistance,
@@ -547,10 +528,12 @@ export function useTrip() {
         route: route.map(({ latitude, longitude }) => ({ latitude, longitude })),
         type: selectedActivity,
         title: title,
-        info: description
+        info: description,
+        elevationGain: elevationGain,
+        stepCount: stepCount,
+        upwardSteps: upwardSteps
       };
       
-      // Check if we're offline
       const networkState = await NetInfo.fetch();
       
       if (!networkState.isConnected) {
@@ -562,13 +545,11 @@ export function useTrip() {
           'Tvoj trip bol uložný lokálne. Bude sa synchronizovať, keď sa pripojíš k internetu.'
         );
       } else {
-        // Online - proceed normally
         const result = await apiService.createTrip(tripData);
         
         if (result && result.success) {
           setTripId(result.tripId);
-          
-          // Upload photos one by one
+
           if (photos.length > 0) {
             for (const photo of photos) {
               if (!photo.uploaded) {
@@ -590,10 +571,9 @@ export function useTrip() {
       if (error instanceof Error) {
         Alert.alert('Error', `Chyba pri ukladaní: ${error.message}. Uloženie do lokálneho zariadenia.`);
         
-        // Make sure userId exists before creating tripData
         if (userId) {
           const tripData: TripData = {
-            userId: userId, // Now we're sure userId is a string, not null
+            userId: userId,
             startedAt: new Date(startTime!).toISOString(),
             endedAt: new Date().toISOString(),
             distanceKm: totalDistance,
@@ -602,7 +582,10 @@ export function useTrip() {
             route: route.map(({ latitude, longitude }) => ({ latitude, longitude })),
             type: selectedActivity,
             title: title,
-            info: description
+            info: description,
+            elevationGain: elevationGain,
+            stepCount: stepCount,
+            upwardSteps: upwardSteps
           };
           const transactionId = generateTransactionId();
           await saveTripLocally(tripData, photos, transactionId);
@@ -623,7 +606,7 @@ export function useTrip() {
       pendingTrips.push({
         tripData,
         photos,
-        transactionId, // Store the unique transaction ID
+        transactionId,
       });
     
       await AsyncStorage.setItem(PENDING_TRIPS_KEY, JSON.stringify(pendingTrips));
@@ -675,16 +658,13 @@ export function useTrip() {
     }
   };
 
-  // Cancel the save modal
   const cancelSaveModal = () => {
     setShowSaveModal(false);
   };
 
-  // Manual sync function - still available for the UI, but now auto-sync is the primary method
   const syncNow = async () => {
     console.log('[syncNow] Manual sync triggered');
-    
-    // Get current network state
+
     const networkState = await NetInfo.fetch();
     if (!networkState.isConnected) {
       console.log('[syncNow] Device is offline, cannot sync');
@@ -698,7 +678,6 @@ export function useTrip() {
       return;
     }
     
-    // Check if we have any pending trips before trying to sync
     const hasPending = await checkPendingTrips();
     if (!hasPending) {
       console.log('[syncNow] No pending trips to sync');
@@ -706,7 +685,6 @@ export function useTrip() {
       return;
     }
     
-    // All checks passed, proceed with sync
     console.log('[syncNow] Starting sync operation');
     syncPendingTrips();
   };
@@ -731,6 +709,9 @@ export function useTrip() {
     setSelectedActivity,
     syncNow,
     saveTripWithDetails,
-    cancelSaveModal
+    cancelSaveModal,
+    elevationGain,
+    stepCount,
+    upwardSteps,
   };
 }

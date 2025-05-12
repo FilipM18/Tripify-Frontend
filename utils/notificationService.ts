@@ -12,17 +12,13 @@ export async function setupNotifications(): Promise<() => void> {
     await registerDeviceToken(fcmToken);
   }
 
-  // foreground
   const unsubscribeForeground = messaging().onMessage(async remoteMessage => {
     console.log('Foreground notification received:', remoteMessage);
-    // You can show a local notification here if desired
   });
 
-  // background or closed
   messaging().onNotificationOpenedApp(remoteMessage => {
     console.log('Notification opened app from background state:', remoteMessage);
     
-    // Navigate
     if (remoteMessage.data) {
       const { type, contentType, contentId } = remoteMessage.data;
       

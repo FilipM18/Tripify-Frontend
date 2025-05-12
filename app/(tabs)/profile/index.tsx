@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getToken, removeToken } from '@/utils/auth';
-import { apiRequest } from '@/utils/api';
+import { getUserProfile } from '@/utils/api';
 import { apiService } from '@/utils/api';
 import ProfileHeader from './components/ProfileHeader';
 import ProfileTabs from './components/ProfileTabs';
@@ -56,21 +56,14 @@ export default function ProfileScreen() {
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
-      const token = await getToken();
-      if (!token) {
-        router.replace('/(auth)/login');
-        return;
-      }
-
-      const response = await apiRequest<{ success: boolean; user: UserProfile }>(
-        '/auth/verify',
-        'GET',
-        undefined,
-        token
-      );
-
+      
+      const response = await getUserProfile();
+      console.log('Profile screen - API response:', response);
+      
       if (response.success && response.user) {
         setUserProfile(response.user);
+        console.log('Profile data set:', response.user);
+        console.log('Photo URL:', response.user.photo_url);
       } else {
         Alert.alert('Error', 'Chyba pri načítaní profilu. Skúste to znova neskôr.');
       }
@@ -87,6 +80,7 @@ export default function ProfileScreen() {
       const { streak } = await apiService.getUserActivityStreak();
       setActivityStreak(streak);
     } catch (error) {
+      console.error('Error fetching streak:', error);
       setActivityStreak(0);
     }
   };
@@ -106,13 +100,15 @@ export default function ProfileScreen() {
     );
   }
 
+  console.log('Rendering profile with user data:', userProfile);
+
   return (
     <ScrollView style={styles.container}>
       {userProfile && (
         <>
           <ProfileHeader 
             username={userProfile.username}
-            photoUrl={userProfile.photo_url ? `${API_URL}${userProfile.photo_url}` : null}
+            photoUrl={userProfile.photoUrl || null}
             streak={activityStreak}
           />
           

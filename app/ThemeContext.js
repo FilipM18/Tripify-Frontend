@@ -86,10 +86,8 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
-  // Odvodenie skutočnej témy na základe nastavení prístupnosti
   const theme = createAccessibleTheme(isDarkMode, visionMode);
-  
-  // Hodnota, ktorá sa poskytne spotrebiteľom
+
   const contextValue = {
     isDarkMode,
     toggleTheme,
